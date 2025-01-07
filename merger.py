@@ -16,9 +16,13 @@ def merge_flow_datasets(file1, file2, output_file):
         
         # Validate required columns
         required_columns = {
-            "timestamp_start", "timestamp_end", "flow_key",
-            "src_ports", "dst_ports", "packet_count",
-            "tcp_flags_pattern", "label"
+            "start_time",
+            "end_time",
+            "duration",
+            "src_ip", "dst_ip",
+            "src_port", "dst_port",
+            "SYN", "ACK", "FIN", "RST", "URG", "PSH",
+            "vertical_scan", "horizontal_scan" , "label"
         }
         
         if not required_columns.issubset(df1.columns) or not required_columns.issubset(df2.columns):
@@ -27,10 +31,7 @@ def merge_flow_datasets(file1, file2, output_file):
         
         # Append the two datasets
         merged_df = pd.concat([df1, df2], ignore_index=True)
-        
-        # Remove duplicates based on the 'flow_key' column
-        merged_df = merged_df.drop_duplicates(subset=['flow_key'])
-        
+                
         # Save the merged dataset
         merged_df.to_csv(output_file, index=False)
         
@@ -48,8 +49,8 @@ def merge_flow_datasets(file1, file2, output_file):
 
 if __name__ == "__main__":
     # Define file paths
-    file1 = 'datasets/packets_scan_bad.csv'
-    file2 = 'datasets/packets_scan_good.csv'
+    file1 = 'datasets/second/bad.csv'
+    file2 = 'datasets/second/good.csv'
     output_file = 'merged.csv'
     
     merge_flow_datasets(file1, file2, output_file)

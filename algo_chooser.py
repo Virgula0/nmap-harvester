@@ -11,42 +11,41 @@ import time
 def current_ms() -> int:
     return round(time.time() * 1000)
 
-# Preprocessing function
+
 def preprocess_dataset(df: pd.DataFrame):
     """
     Preprocess dataset for binary classification.
-    Converts timestamps, list fields, and text fields into numerical features.
+    Converts timestamps, categorical features, and binary flags into numerical features.
+    Removes source and destination IPs and ports from classification.
     """
-    # 1️⃣ Handle timestamps
-    df['timestamp_start'] = pd.to_datetime(df['timestamp_start']).astype('int64') // 10**9
-    df['timestamp_end'] = pd.to_datetime(df['timestamp_end']).astype('int64') // 10**9
+    df['start_time'] = pd.to_datetime(df['start_time'])
+    df['end_time'] = pd.to_datetime(df['end_time'])
     
-    # Create a duration feature
-    df['duration'] = df['timestamp_end'] - df['timestamp_start']
-    df.drop(columns=['timestamp_start', 'timestamp_end'], inplace=True)
+    df['start_time'] = df['start_time'].astype('int64') // 10**9
+    df['end_time'] = df['end_time'].astype('int64') // 10**9
+    
+    df.drop(columns=['start_time', 'end_time'], inplace=True)
+    
+    df.drop(columns=['src_ip', 'dst_ip', 'src_port', 'dst_port'], inplace=True, errors='ignore')
+    
+    flag_columns = ['SYN', 'ACK', 'FIN', 'RST', 'URG', 'PSH']
+    for flag in flag_columns:
+        df[flag] = df[flag].astype(int)
+    
+    df['vertical_scan'] = df['vertical_scan'].astype(int)
+    df['horizontal_scan'] = df['horizontal_scan'].astype(int)
+    
+    # 5️⃣ Ensure No Missing Values
+    df.fillna(0, inplace=True)
 
-    df['flow_key'] = df['flow_key'].astype('category').cat.codes
-
-    df['src_ports_count'] = df['src_ports'].apply(lambda x: len(eval(x)))
-    df['dst_ports_count'] = df['dst_ports'].apply(lambda x: len(eval(x)))
-    df.drop(columns=['src_ports', 'dst_ports'], inplace=True)
-
-    def flatten_flags(pattern):
-        flags = eval(pattern)
-        return np.mean(flags, axis=0) if flags else [0] * 6
-
-    flags_df = df['tcp_flags_pattern'].apply(flatten_flags).apply(pd.Series)
-    flags_df.columns = [f"tcp_flag_{i}" for i in range(flags_df.shape[1])]
-    df = pd.concat([df, flags_df], axis=1)
-    df.drop(columns=['tcp_flags_pattern'], inplace=True)
-
+    
     return df
 
 
 # Main script
 if __name__ == "__main__":
     # Load Dataset
-    df = pd.read_csv('./train_datasets/merged.csv')
+    df = pd.read_csv('./merged.csv')
     print(f"Dataset loaded with {len(df)} records.")
 
     # Preprocess Dataset
@@ -60,7 +59,7 @@ if __name__ == "__main__":
 
     # Train/Test Split
     train_data, test_data, train_label, test_label = train_test_split(
-        X, y, test_size=0.75, shuffle=True
+        X, y, test_size=0.1, shuffle=True
     )
 
     print("Dataset split into training and testing sets.")
