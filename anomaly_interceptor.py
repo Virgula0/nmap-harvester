@@ -67,7 +67,7 @@ def capture_packets(interface='lo',
                             ss['end_request_time'],
                             ss['start_response_time'],
                             ss['end_response_time'],
-                            ss['duration'],
+                            ss['end_response_time'] - ss['start_request_time'], # duration
                             list(ss['src_ips']),
                             list(ss['dst_ips']),
                             list(ss['src_ports']),
