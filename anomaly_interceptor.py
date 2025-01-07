@@ -6,6 +6,7 @@ import sys
 from collections import defaultdict
 import threading
 import time
+import os
 
 # Sliding window parameters
 WINDOW_SIZE = timedelta(seconds=0.5)  # 0.5-second window
@@ -67,7 +68,7 @@ def capture_packets(interface='lo',
                             ss['end_request_time'],
                             ss['start_response_time'],
                             ss['end_response_time'],
-                            ss['end_response_time'] - ss['start_request_time'], # duration
+                            (ss['end_response_time'] - ss['start_request_time']).total_seconds(), # duration
                             list(ss['src_ips']),
                             list(ss['dst_ips']),
                             list(ss['src_ports']),
@@ -141,13 +142,14 @@ def capture_packets(interface='lo',
 
 
 if __name__ == "__main__":
+    output_file='datasets/third/bad.csv'
+    #os.remove(output_file)
     capture_packets(
         interface='br-92ee71a2a290',
         scanner_ip='172.31.0.2',
-        output_file='datasets/third/bad.csv',
+        output_file=output_file,
         label=1
     )
-
 
 
 """
@@ -167,9 +169,9 @@ docker run -dit --name traffic_generator \
   ubuntu:22.04 bash
 
 # From Container:
-nmap -sT 172.31.0.1 -p 0-5000 # TCP Scan
-nmap -sS 172.31.0.1 -p 0-5000 # Stealth Scan
-nmap -sF 172.31.0.1 -p 0-5000 # FIN Scan
-nmap -sN 172.31.0.1 -p 0-5000 # NULL Scan
-nmap -sX 172.31.0.1 -p 0-5000 # XMAS Scan
+nmap -sT 172.31.0.1 -p 0-10000 # TCP Scan
+nmap -sS 172.31.0.1 -p 0-10000 # Stealth Scan
+nmap -sF 172.31.0.1 -p 0-10000 # FIN Scan
+nmap -sN 172.31.0.1 -p 0-10000 # NULL Scan
+nmap -sX 172.31.0.1 -p 0-10000 # XMAS Scan
 """

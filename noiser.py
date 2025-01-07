@@ -6,7 +6,7 @@ import time
 
 TARGET_HOST = "172.31.0.1"  # Replace with the actual target IP/hostname
 NUM_RANDOM_PORTS = 8000     # Number of random ports to try each cycle
-SLEEP_SECONDS = 1         # Time to wait between cycles
+SLEEP_SECONDS = 0        # Time to wait between cycles
 
 def generate_noise():
     """
@@ -19,7 +19,7 @@ def generate_noise():
         print(f"Trying {url}")
         try:
                 # Using a short timeout to avoid blocking for too long on closed or filtered ports
-            requests.get(url, timeout=0.5)
+            requests.get(url, timeout=10)
             print(f"[Random Port] Sent request to {url}")
         except Exception as e:
              # We expect many of these to fail if the port is closed or filtered
