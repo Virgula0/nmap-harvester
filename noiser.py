@@ -13,7 +13,7 @@ def generate_noise():
     Send HTTP GET requests to random ports and one known open port (OPEN_PORT).
     """
     # 1) Make requests to random ports
-    for port in range(NUM_RANDOM_PORTS):
+    for port in range(1,NUM_RANDOM_PORTS):
         #port = random.randint(1, 65535)  # choose a random port in [1..65535]
         url = f"http://{TARGET_HOST}:{port}/"
         print(f"Trying {url}")
