@@ -49,7 +49,7 @@ def merge_flow_datasets(file1, file2, output_file):
 if __name__ == "__main__":
     # Define file paths
     file1 = './train/bad.csv'
-    file2 = './/good.csv'
+    file2 = './train/good.csv'
     output_file = './train/merged.csv'
     
     merge_flow_datasets(file1, file2, output_file)
