@@ -189,16 +189,19 @@ def capture_packets(interface='lo',
     nmap -sF 172.31.0.1 -p 0-10000 # FIN Scan
     nmap -sN 172.31.0.1 -p 0-10000 # NULL Scan
     nmap -sX 172.31.0.1 -p 0-10000 # XMAS Scan
+    
+    # Delayed scan (second datasets)    
+    nmap -p 1-10000 --scan-delay 1s 172.31.0.1
 """
 
 """
     RUN from main for creating train datasets assigning labels 0 and 1 based on the traffic type
 """
 if __name__ == "__main__":
-    output_file = 'datasets/runtime/capture.csv'
+    output_file = 'datasets/delayed/good.csv'
     capture_packets(
-        interface='lo', # Change it based on your interface name, to grab it, do an ifconfig from terminal
-        scanner_ip='127.0.0.1', # change it based on ipv4_address from docker compose file
+        interface='br-442842f5362e', # Change it based on your interface name, to grab it, do an ifconfig from terminal
+        scanner_ip='172.31.0.2', # change it based on ipv4_address from docker compose file
         output_file=output_file,
         label=0 # change label accordingly
     )

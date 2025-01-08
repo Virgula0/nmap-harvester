@@ -4,19 +4,12 @@ import nmap
 import requests as r
 
 SLEEP_TIME = 1
-SLEEP_TIME_ON_INJECT = 10
-PROBABILITY_INJECTION = 10 # 10% of probbailities to inject an anomaly
+PROBABILITY_INJECTION = 10 # 10% of probabilities to inject an anomaly each SLEEP_TIME seconds
 nm = nmap.PortScanner()
 
 def should_inject() -> bool:
     """
     Determines if an injection should happen based on PROBABILITY_INJECTION.
-
-    Args:
-        PROBABILITY_INJECTION (int): PROBABILITY_INJECTION percentage (0-100).
-
-    Returns:
-        bool: True if the random number matches the probability condition, False otherwise.
     """
     random_number = random.uniform(0, 100)
     return random_number < PROBABILITY_INJECTION

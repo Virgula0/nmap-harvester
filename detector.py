@@ -72,6 +72,8 @@ def main():
     threads.append(injector_thread)
     injector_thread.start()
     
+    time.sleep(SLEEP_SECONDS) # wait a second before proceeding
+    
     with Live(console=console, refresh_per_second=1) as live:
         while True:
             if not os.path.exists(RUNTIME_CAPTURE):
@@ -105,7 +107,8 @@ def main():
                 f"Total samples: {total}\n"
                 f"Normal: {normal_count} ({normal_percentage:.2f}%)\n"
                 f"Anomalies: {anomaly_count} ({anomaly_percentage:.2f}%)\n"
-                f"ANOMALY DETECTED? {anomaly_detected}\n"
+                f"ANOMALY DETECTED? {anomaly_detected}\n",
+                "\n"
             )
             
             save_logs(result_message)
