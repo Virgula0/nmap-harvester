@@ -178,7 +178,7 @@ python3 -m venv venv && source venv/bin/activate && pip install -r requirements.
 
 ## Demonstration Video
 
-![](docs/video/demo.mp4)
+https://github.com/user-attachments/assets/f10773c6-742e-4394-913e-42beb0cc3683
 
 ## References
 
