@@ -1,0 +1,118 @@
+import time
+import joblib
+from rich.live import Live
+from rich.table import Table
+from rich.console import Console
+from utils import preprocess_dataset, save_logs, RUNTIME_CAPTURE
+import pandas as pd
+import datetime
+import os
+from interceptor import capture_packets
+import threading
+import signal
+import sys
+from injector import run_injector
+
+SLEEP_SECONDS = 1
+MODEL_PATH = 'model/model.pkl'
+ANOMALY_PERCENTAGE = 30
+
+INTERFACE = 'lo'
+IP = "127.0.0.1"
+
+console = Console()
+threads = []
+
+# Graceful shutdown handler
+def signal_handler(sig, frame):
+    console.print("[bold red]\n[INFO] Shutting down gracefully...[/bold red]")
+    for thread in threads:
+        if thread.is_alive():
+            thread.join(timeout=1)
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
+def read_data():
+    df = pd.read_csv(RUNTIME_CAPTURE)
+    df = preprocess_dataset(df)
+    return df
+
+# Generate live output using rich
+def generate_output(data, anomaly_detected, normal_count, anomaly_count, normal_percentage, anomaly_percentage):
+    table = Table(title=f"Prediction Summary - {datetime.datetime.now()}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="magenta")
+    
+    table.add_row("Total Samples", str(len(data)))
+    table.add_row("Normal Count", str(normal_count))
+    table.add_row("Anomaly Count", str(anomaly_count))
+    table.add_row("Normal Percentage", f"{normal_percentage:.2f}%")
+    table.add_row("Anomaly Percentage", f"{anomaly_percentage:.2f}%")
+    table.add_row("Anomaly Detected", "Yes" if anomaly_detected else "No", style="bold red" if anomaly_detected else "bold green")
+    
+    return table
+
+def main():
+    model = joblib.load(MODEL_PATH)
+    console.print("[bold green][INFO] Model loaded successfully![/bold green]")
+    
+    if os.geteuid() != 0:
+        sys.exit("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
+    
+    if os.path.exists(RUNTIME_CAPTURE):
+        os.remove(RUNTIME_CAPTURE)
+    
+    # Start background threads
+    capture_thread = threading.Thread(target=capture_packets, args=(INTERFACE, IP, RUNTIME_CAPTURE))
+    threads.append(capture_thread)
+    capture_thread.start()
+    
+    injector_thread = threading.Thread(target=run_injector)
+    threads.append(injector_thread)
+    injector_thread.start()
+    
+    time.sleep(SLEEP_SECONDS) # wait a second before proceeding
+    
+    with Live(console=console, refresh_per_second=1) as live:
+        while True:
+            if not os.path.exists(RUNTIME_CAPTURE):
+                console.print(f"[bold red][ERROR] No runtime capture file found, retrying in {SLEEP_SECONDS} sec[/bold red]")
+                time.sleep(SLEEP_SECONDS)
+                continue
+            
+            data = read_data()
+            if data.empty:
+                console.print("[bold yellow][INFO] Dataframe empty, waiting for data...[/bold yellow]")
+                time.sleep(SLEEP_SECONDS)
+                continue
+            
+            predictions = model.predict(data)
+            normal_count = sum(1 for p in predictions if p == 0)
+            anomaly_count = sum(1 for p in predictions if p == 1)
+            total = len(predictions)
+            normal_percentage = (normal_count / total) * 100
+            anomaly_percentage = (anomaly_count / total) * 100
+            
+            anomaly_detected = anomaly_percentage >= ANOMALY_PERCENTAGE
+            
+            if anomaly_detected:
+                console.print("[bold red][WARN] Detected anomaly![/bold red]")
+            else:
+                console.print("[bold green][INFO] System normal![/bold green]")
+            
+            live.update(generate_output(data, anomaly_detected, normal_count, anomaly_count, normal_percentage, anomaly_percentage))
+            
+            result_message = (
+                f"Total samples: {total}\n"
+                f"Normal: {normal_count} ({normal_percentage:.2f}%)\n"
+                f"Anomalies: {anomaly_count} ({anomaly_percentage:.2f}%)\n"
+                f"ANOMALY DETECTED? {anomaly_detected}\n",
+                "\n"
+            )
+            
+            save_logs(result_message)
+            time.sleep(SLEEP_SECONDS)
+
+if __name__ == '__main__':
+    main()
