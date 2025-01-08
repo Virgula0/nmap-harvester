@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import requests
-import random
 import time
 
 TARGET_HOST = "172.31.0.1"  # Replace with the actual target IP/hostname
