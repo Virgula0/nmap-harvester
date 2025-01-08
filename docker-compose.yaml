@@ -1,0 +1,21 @@
+services:
+  traffic_generator:
+    container_name: traffic_generator
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      custom_bridge:
+        ipv4_address: 172.31.0.2 # Change it eventually
+    volumes:
+      - .:/tmp/temp
+    stdin_open: true
+    tty: true
+
+networks:
+  custom_bridge:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.31.0.0/24 # Change it based on your subnet address

@@ -191,4 +191,4 @@ if __name__ == "__main__":
     
     # Export model using best mcc score
     
-    joblib.dump(best_mcc_n, "./model/model.pkl")
+    joblib.dump(best_mcc_clf, "./model/model.pkl")

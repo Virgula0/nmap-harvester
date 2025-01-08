@@ -17,7 +17,7 @@ def generate_noise():
         url = f"http://{TARGET_HOST}:{port}/"
         print(f"Trying {url}")
         try:
-                # Using a short timeout to avoid blocking for too long on closed or filtered ports
+            # Using a short timeout to avoid blocking for too long on closed or filtered ports
             requests.get(url, timeout=10)
             print(f"[Random Port] Sent request to {url}")
         except Exception as e:
