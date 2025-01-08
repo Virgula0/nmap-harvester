@@ -170,5 +170,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 catboost_info
-runtime/*
+datasets/runtime/*
 logs
