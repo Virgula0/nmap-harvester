@@ -123,6 +123,7 @@ jobs:
         run: |
           pandoc README_processed.md -o README_temp.html --from markdown --to html --standalone --metadata=charset=UTF-8 --resource-path=".:docs/images"
           weasyprint --base-url "$(pwd)" README_temp.html docs/docs.pdf -s docs/styles/main.css
+          cat README_temp.html
           rm README_temp.html
 
       - name: Commit and Push Changes

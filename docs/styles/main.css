@@ -1,7 +1,7 @@
 /* General GitHub Markdown Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 90%;
+    font-size: 80%; /* Reduced font size */
     line-height: 1.2;
     color: #24292e;
     background-color: #ffffff;
@@ -9,7 +9,7 @@ body {
 }
 
 p, div {
-    font-size: 90%;
+    font-size: 80%; /* Reduced font size */
 }
 
 h1, h2 {
@@ -32,13 +32,13 @@ table, th, td {
 
 th, td {
     text-align: left;
-    font-size: 90%;
+    font-size: 80%; /* Reduced font size */
     padding: 0.6em;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
-    font-size: 100%;
+    font-size: 85%; /* Reduced font size */
     margin-top: 1.5em;
     margin-bottom: 0.4em;
 }
@@ -48,7 +48,7 @@ code {
     background-color: #f6f8fa;
     padding: 2px 3px;
     border-radius: 4px;
-    font-size: 85%;
+    font-size: 75%; /* Reduced font size */
 }
 
 blockquote {
@@ -57,6 +57,7 @@ blockquote {
     color: #6a737d;
     border-left: 0.25em solid #dfe2e5;
     background: #f9f9f9;
+    font-size: 80%; /* Reduced font size */
 }
 
 .alert {
@@ -65,6 +66,7 @@ blockquote {
     border-radius: 6px;
     font-weight: 500;
     line-height: 1.4;
+    font-size: 80%; /* Reduced font size */
 }
 
 img {
@@ -75,4 +77,5 @@ img {
 ul, ol {
     margin-left: 1.5em;
     line-height: 1.4;
+    font-size: 80%; /* Reduced font size */
 }
