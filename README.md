@@ -48,6 +48,7 @@ nmap -sX 172.31.0.1 -p 0-10000 # XMAS Scan
 ```
 
 The dataset consists of:
+
 - `bad.csv`: Sessions labeled as `1` (`NMAP` traffic).
 - `good.csv`: Sessions labeled as `0` (legitimate traffic).
 

@@ -42,6 +42,7 @@ h1, h2, h3, h4, h5, h6 {
 code {
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
     background-color: #f6f8fa;
+    font-size: 100%;
     padding: 2px 3px; /* Slightly reduced padding */
     border-radius: 4px;
 }
@@ -98,5 +99,5 @@ img {
 }
 
 ul, ol {
-    line-height: 1.3; /* Reduced line height for lists */
+    line-height: 1.0; /* Reduced line height for lists */
 }
