@@ -14,7 +14,7 @@ To address this, this project proposes a machine learning-based approach for ide
 
 How the `interceptor.py` collects all TCP flags can be summered in the following scheme.
 
-![img](docs/images/attacks.png)
+<img src='docs/images/attacks.png' style='zoom: 100%; border: 2px solid #ddd;' alt="missing"/>
 
 All this attack data are collected by the `interceptor.py` which listens for coming connection on a specific ip address.
 
