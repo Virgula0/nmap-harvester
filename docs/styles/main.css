@@ -1,7 +1,6 @@
 /* General GitHub Markdown Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 10%; /* Decreased font size */
     line-height: 1.0; /* Reduced line height */
     color: #24292e;
     background-color: #ffffff;
@@ -9,7 +8,7 @@ body {
 }
 
 * {
-    font-size: 10%;
+    font-size: 90%;
 }
 
 h1, h2 {
