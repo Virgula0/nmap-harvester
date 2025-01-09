@@ -95,7 +95,7 @@ The dataset generated for training purposes contains a balanced example of norma
 
 ### Why MCC is not that important?
 
-MCC should normally be preferred when unbalanced datasets are present. This is not our case, but it is taken into account, even if it has a minor weight, in the final machine-learning model choice.
+MCC should normally be preferred when unbalanced datasets are present. This is not our case, but it is taken into account even if it has a minor weight in the final machine-learning model choice.
 
 ### Why the prediction speed is so important?
 
