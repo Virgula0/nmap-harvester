@@ -163,7 +163,7 @@ if __name__ == "__main__":
             )
 
             # Track the best classifier based on Accuracy
-            if acc_score > best_acc:
+            if acc_score >= best_acc:
                 best_acc = acc_score
                 best_acc_clf = clf
                 best_acc_n = getattr(clf, 'n_estimators', 'N/A')
@@ -189,6 +189,8 @@ if __name__ == "__main__":
     print(f"n_estimators: {best_mcc_n}")
     print(f"MCC Score: {best_mcc:.6f}")
     
-    # Export model using best mcc score
-    
-    # joblib.dump(best_mcc_clf, "./model/model.pkl")
+    # Export model prefering best accuracy model over best_mcc
+    # I comment the dump because, XGBClassifier does not provide the best accuracy every time
+    # The reason why it has been chosen over other models can be found in README.md
+
+    # joblib.dump(best_acc_clf, "./model/model.pkl")
