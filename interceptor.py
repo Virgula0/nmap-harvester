@@ -7,7 +7,7 @@ import time
 
 # Sliding window parameters
 WINDOW_SIZE = timedelta(seconds=0.5)  # Session timeout window
-SAVE_INTERVAL = 1  # Save sessions every 1 second
+SAVE_INTERVAL = 1  # Save in the csv every second
 
 # TCP FLAG PATTERNS
 REQUEST_PATTERNS = {
@@ -75,6 +75,7 @@ def capture_packets(interface='lo',
             with open(output_file, mode='a', newline='') as csv_file:
                 writer = csv.writer(csv_file)
                 for session_key, ss in list(sessions.items()):
+                    # Each seconds we try to save a session raw if WINDOW_SIZE time is elapsed
                     if (current_time - ss['last_updated']) > WINDOW_SIZE:
                         end_time = ss['end_response_time'] or ss['end_request_time']
                         if ss['end_response_time'] is None:
@@ -98,11 +99,13 @@ def capture_packets(interface='lo',
                         del sessions[session_key]
             time.sleep(SAVE_INTERVAL)
 
-
+    # Use a separate thread for managing csv 
     saver_thread = threading.Thread(target=save_sessions_periodically, daemon=True)
     saver_thread.start()
 
-
+    # get_tcp_flags
+    # uses & operator just for getting the correct flag position within the entire packet structure
+    # if it is present 1 is returned for such flag otherwise not present, 0
     def get_tcp_flags(packet):
         return {
             'SYN': 1 if (int(packet.tcp.flags, 16) & 0x02) else 0,
@@ -112,7 +115,6 @@ def capture_packets(interface='lo',
             'URG': 1 if (int(packet.tcp.flags, 16) & 0x20) else 0,
             'PSH': 1 if (int(packet.tcp.flags, 16) & 0x08) else 0
         }
-
 
     for packet in capture.sniff_continuously():
         if 'ip' not in packet or 'tcp' not in packet:
@@ -132,7 +134,7 @@ def capture_packets(interface='lo',
             REQUEST_PATTERNS['NULL_SCAN'],
             REQUEST_PATTERNS['XMAS_SCAN']
         ]):
-            session_key = tuple(sorted([src_ip, dst_ip]))
+            session_key = tuple(sorted([src_ip, dst_ip])) # chnage session key since these scan could not contain a response
         else:
             session_key = tuple(sorted([src_ip, dst_ip, src_port, dst_port]))
 
@@ -184,17 +186,15 @@ def capture_packets(interface='lo',
         
 
     # From Container:
-    nmap -sT 172.31.0.1 -p 0-10000 # TCP Scan
-    nmap -sS 172.31.0.1 -p 0-10000 # Stealth Scan
-    nmap -sF 172.31.0.1 -p 0-10000 # FIN Scan
-    nmap -sN 172.31.0.1 -p 0-10000 # NULL Scan
-    nmap -sX 172.31.0.1 -p 0-10000 # XMAS Scan
+    nmap -sT 172.31.0.1 -p 0-5000 # TCP Scan
+    nmap -sS 172.31.0.1 -p 0-5000 # Stealth Scan
+    nmap -sF 172.31.0.1 -p 0-5000 # FIN Scan
+    nmap -sN 172.31.0.1 -p 0-5000 # NULL Scan
+    nmap -sX 172.31.0.1 -p 0-5000 # XMAS Scan
     
     # Delayed scan (second datasets)    
     nmap -p 1-10000 --scan-delay 1s 172.31.0.1
-"""
 
-"""
     RUN from main for creating train datasets assigning labels 0 and 1 based on the traffic type
 """
 if __name__ == "__main__":
