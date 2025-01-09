@@ -121,7 +121,7 @@ jobs:
 
       - name: Convert README Processed to PDF with WeasyPrint
         run: |
-          pandoc README_processed.md -o README_temp.html --from markdown --to html --standalone --metadata=charset=UTF-8 --resource-path=".:docs/images"
+          pandoc README_processed.md -o README_temp.html --from markdown --to html --standalone --metadata=charset=UTF-8 -resource-path=".:docs/images:docs/images/Screenshots"
           weasyprint --base-url "$(pwd)" README_temp.html docs/docs.pdf -s docs/styles/main.css
           cat README_temp.html
           rm README_temp.html
@@ -129,5 +129,5 @@ jobs:
       - name: Commit and Push Changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Process Markdown copy, replace links, alerts, and generate PDF"
+          commit_message: "Generate PDF"
           file_pattern: docs/docs.pdf
