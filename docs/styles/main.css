@@ -7,7 +7,7 @@ body {
     margin: 1.5em; /* Reduced margin */
 }
 
-* {
+p, div {
     font-size: 80%;
 }
 
@@ -42,7 +42,6 @@ h1, h2, h3, h4, h5, h6 {
 code {
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
     background-color: #f6f8fa;
-    font-size: 100%;
     padding: 2px 3px; /* Slightly reduced padding */
     border-radius: 4px;
 }
@@ -51,7 +50,6 @@ blockquote {
     margin: 0;
     padding: 0.4em 0.8em; /* Reduced padding */
     color: #6a737d;
-    font-size: 100%;
     border-left: 0.25em solid #dfe2e5;
     background: #f9f9f9;
 }
