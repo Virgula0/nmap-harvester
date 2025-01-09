@@ -8,7 +8,7 @@ body {
     margin: 1.5em; /* Reduced margin */
 }
 
-p {
+* {
     font-size: 10%;
 }
 
