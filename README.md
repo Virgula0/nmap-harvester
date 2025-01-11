@@ -31,17 +31,24 @@ In the project the following files have the described functions:
 - `datasets/train/merged.csv` -> contains the datasets used for training the model
 - `datasets/runtime` -> contains generated runtime datasets when running `detector.py`
 
+> [!WARNING]
+> The entire software is designed for running on a Linux environment and although the only changes needed for running on another operating system are interface names, some checks may fail due to different environments.
+> For example: `detector.py` (https://github.com/Virgula0/nmap-harvester/blob/main/detector.py#L60) contains a check to run with `root` privileges and this check should be commented if the environment is different from Unix.
+> This disclaimer has been inserted because I noticed the usage of other operating systems during the course lectures. Running the `detector.py` on a virtual environment should work because not everything is set to run on the `localhost` interface, but even here, the creation of the dataset phases may not work because of interfaces used by pyshark on a virtual machine. A solution can be to create another container and let the 2 isolated container to communicate between them, but this is up to the readers to investigate better eventually.
+
 ---
 
-## Train Dataset Creation (datasets/train/merged.csv)
+## Train Dataset Creation `datasets/train/merged.csv`
 
 Understanding TCP connections is important for building the dataset. When a TCP packet is sent over the network, it carries specific flags that facilitate the `3-Way Handshake`. `NMAP` can manipulate these flags to evade detection while performing rapid port scans. We cannot create a dataset where each row of the dataset represents a packet since for detecting `NMAP`, multiple packets are needed, so the idea:
 
 ### Key Dataset Characteristics 
 
 - **Session-Based Rows:** Instead of logging each packet individually, each row in the dataset represents a **session** (requests + responses).
-- **Flag Summation:** Flags (`SYN`, `ACK`, `FIN`, etc.) are aggregated across the session. For example:  
-  - If a `SYN` packet is sent by `NMAP` and another `SYN` is part of the response, the `SYN` column will record a value of `2`.
+- **Flag Summation:** Flags (`SYN`, `ACK`, `FIN`, etc.) are aggregated across the same session. For example:  
+  - If a `SYN` packet is sent by `NMAP` and another `SYN` is sent by the host in the response (whatever the port is closed or opened), the `SYN` column will record a value of `2` because of their sum.
+  - The dataset contains 6 (`SYN`,`ACK`,`RST`,`FIN`,`URG`,`PSH`) out of 9 TCP flags. NMAP uses those flags, but in the case of other new attacks, the dataset can be rebuilt using other TCP flags, too.
+- **Duration feature**: `start_response_time`, and`end_response_time`  will be set to 0 if only a packet has been found in the entire session. In this case, the duration will be only `end_request_time` - `start_request_time` otherwise the session duration is `end_response_time` - `start_request_time`
 
 ### Example Dataset Row (normal tcp scan on a closed port 3306)
 
@@ -50,7 +57,7 @@ start_request_time,end_request_time,start_response_time,end_response_time,durati
 2025-01-08 13:52:55.274814,2025-01-08 13:52:55.274814,2025-01-08 13:52:55.274874,2025-01-08 13:52:55.274874,6e-05,"['172.31.0.1', '172.31.0.2']","['172.31.0.1', '172.31.0.2']","['44031', '3306']","['44031', '3306']",1,1,0,1,0,0,1
 ```
 
-- Sessions are grouped using `src_ip`, `dst_ip`, `src_port`, and `dst_port` tuple as keys. However, these grouping keys are excluded from the model's training phase.
+- Sessions are grouped using `src_ip`, `dst_ip`, `src_port`, and `dst_port` tuple as keys. However, these grouping keys are excluded and not necessary from the model's training phase.
 
 - The `duration` feature provides valuable information for distinguishing between legitimate traffic and `NMAP` scans, as legitimate HTTP requests may exhibit similar flag behaviour but differ in timing.
 
@@ -58,9 +65,12 @@ start_request_time,end_request_time,start_response_time,end_response_time,durati
 
 More technical explanations are present via comments in `interceptor.py`. The script takes a while for writing succesfully all the data when a lot of requests are performed.
 
+> [!NOTE]
+> During the data collection, some ports were opened intentionally on the host to differentiate some rows in the dataset. For example, an HTTP server on port 1234 has been opened using the following method: `python3 -m http.server 1234`plus, eventually other ports that had already been opened from other services between the range 0-5000.
+
 ### Common `NMAP` Scans
 
-The following commands were run from the container called `traffic_generator` having the `sudo python3 interceptor.py` running locally.
+The following commands were run from the container called `traffic_generator` (the container) having the `sudo python3 interceptor.py` running locally.
 
 ```bash
 nmap -sT 172.31.0.1 -p 0-5000 # TCP Scan
@@ -119,30 +129,10 @@ Dataset preprocessed successfully.
 
 Dataset split into training and testing sets.
 
-RandomForestClassifier (n_estimators=199): Accuracy: 0.9513, Train time: 395ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=200): Accuracy: 0.9513, Train time: 398ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=201): Accuracy: 0.9513, Train time: 405ms, Prediction time: 17ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=202): Accuracy: 0.9513, Train time: 397ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=203): Accuracy: 0.9513, Train time: 408ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=204): Accuracy: 0.9513, Train time: 416ms, Prediction time: 17ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=205): Accuracy: 0.9513, Train time: 409ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=206): Accuracy: 0.9513, Train time: 411ms, Prediction time: 17ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=207): Accuracy: 0.9513, Train time: 409ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=208): Accuracy: 0.9513, Train time: 403ms, Prediction time: 17ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-RandomForestClassifier (n_estimators=209): Accuracy: 0.9513, Train time: 405ms, Prediction time: 17ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
 RandomForestClassifier (n_estimators=210): Accuracy: 0.9513, Train time: 432ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
 
 ....
 
-XGBClassifier (n_estimators=201): Accuracy: 0.9507, Train time: 65ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=202): Accuracy: 0.9507, Train time: 64ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=203): Accuracy: 0.9507, Train time: 51ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=204): Accuracy: 0.9507, Train time: 45ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=205): Accuracy: 0.9507, Train time: 42ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=206): Accuracy: 0.9507, Train time: 55ms, Prediction time: 6ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=207): Accuracy: 0.9507, Train time: 64ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=208): Accuracy: 0.9507, Train time: 77ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
-XGBClassifier (n_estimators=209): Accuracy: 0.9507, Train time: 42ms, Prediction time: 3ms, MCC: 0.900685, TP: 660, TN: 785, FN: 34, FP: 41
 XGBClassifier (n_estimators=210): Accuracy: 0.9507, Train time: 65ms, Prediction time: 3ms, MCC: 0.919739, TP: 660, TN: 785, FN: 34, FP: 41
 
 Best Classifier based on Accuracy
