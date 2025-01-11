@@ -59,14 +59,42 @@ blockquote {
     background: #f9f9f9;
     font-size: 80%; /* Reduced font size */
 }
-
 .alert {
-    padding: 10px 14px;
-    margin: 12px 0;
+    padding: 12px 16px;
+    margin: 16px 0;
     border-radius: 6px;
     font-weight: 500;
-    line-height: 1.4;
-    font-size: 80%; /* Reduced font size */
+    line-height: 1.5;
+}
+
+.alert-note {
+    background-color: #e7f3fe;
+    border-left: 4px solid #2196f3;
+    color: #004085;
+}
+
+.alert-tip {
+    background-color: #e6ffed;
+    border-left: 4px solid #28a745;
+    color: #155724;
+}
+
+.alert-important {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffcc00;
+    color: #856404;
+}
+
+.alert-warning {
+    background-color: #ffeeba;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+}
+
+.alert-caution {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+    color: #721c24;
 }
 
 img {
