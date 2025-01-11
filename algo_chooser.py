@@ -1,36 +1,14 @@
 import pandas as pd
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, matthews_corrcoef
 
-from sklearn.ensemble import (
-    VotingClassifier,
-    StackingClassifier,
-    RandomForestClassifier,
-    GradientBoostingClassifier,
-    AdaBoostClassifier,
-    BaggingClassifier,
-    ExtraTreesClassifier,
-    HistGradientBoostingClassifier,
-)
-from sklearn.linear_model import (
-    LogisticRegression,
-    RidgeClassifier,
-    SGDClassifier,
-    Perceptron,
-    PassiveAggressiveClassifier,
-)
-from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
-from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
-from sklearn.svm import SVC, LinearSVC, NuSVC
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from catboost import CatBoostClassifier
-
-import joblib
-
 from utils import preprocess_dataset , current_ms
+from classifiers import init_classifiers, suppress_stdout, SUPERVISED
+
+# Suppress ABOD warnings and LinearDiscriminantAnalysis (Wanings depends on the dataset)
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # Main script
 if __name__ == "__main__":
@@ -54,71 +32,7 @@ if __name__ == "__main__":
 
     print("Dataset split into training and testing sets.")
         
-    classifiers = [
-        # Ensemble Classifiers
-        VotingClassifier(estimators=[
-            ('lda', LinearDiscriminantAnalysis()),
-            ('nb', GaussianNB()),
-            ('dt', DecisionTreeClassifier())
-        ]),
-        StackingClassifier(estimators=[
-            ('lda', LinearDiscriminantAnalysis()),
-            ('nb', GaussianNB()),
-            ('dt', DecisionTreeClassifier())
-        ], final_estimator=RandomForestClassifier(n_estimators=10)),
-        BaggingClassifier(estimator=DecisionTreeClassifier(), n_estimators=10),
-        AdaBoostClassifier(n_estimators=50),
-        GradientBoostingClassifier(n_estimators=100),
-        ExtraTreesClassifier(n_estimators=100),
-        HistGradientBoostingClassifier(),
-        CatBoostClassifier(verbose=0),
-        LGBMClassifier(verbose=-1),
-        
-        # Linear Models
-        LogisticRegression(max_iter=1000),
-        RidgeClassifier(),
-        SGDClassifier(max_iter=1000, tol=1e-3),
-        Perceptron(),
-        PassiveAggressiveClassifier(),
-        
-        # Tree-Based Models
-        DecisionTreeClassifier(),
-        ExtraTreeClassifier(),
-        
-        # Naive Bayes Classifiers
-        GaussianNB(),
-        MultinomialNB(),
-        BernoulliNB(),
-        
-        # Discriminant Analysis
-        LinearDiscriminantAnalysis(solver='lsqr'),
-        LinearDiscriminantAnalysis(solver='eigen'),
-
-        QuadraticDiscriminantAnalysis(),
-        
-        # Support Vector Machines
-        SVC(kernel='rbf', probability=True),
-        SVC(kernel='linear', probability=True),
-        LinearSVC(max_iter=10000),
-        NuSVC(probability=True),
-    ]
-    
-    
-    # Dynamically add other classifiers instances with different number of parameters
-    
-    classifiers.extend([
-        KNeighborsClassifier(n_neighbors=n) for n in range(1, 211)
-    ])
-    
-    classifiers.extend([
-        RandomForestClassifier(n_estimators=n) for n in range(1, 211)
-    ])
-    
-    classifiers.extend([
-        XGBClassifier(n_estimators=n) for n in range(1, 211)
-    ])
-    
-     # Track the best classifier based on Accuracy and MCC
+    # Track the best classifier based on Accuracy and MCC and prediction time
     best_acc = float('-inf')
     best_acc_clf = None
     best_acc_n = None
@@ -126,19 +40,33 @@ if __name__ == "__main__":
     best_mcc = float('-inf')
     best_mcc_clf = None
     best_mcc_n = None
+    
+    best_predict_time = float('+inf')
+    best_predict_time_clf = None
+    
+    classifiers = init_classifiers(n_features=len(X.columns))
 
     # Evaluate Classifiers
-    for clf in classifiers:
+    for clf, clf_type in classifiers:
+        
         try:
             # Train Classifier
-            start_train = current_ms()
-            clf.fit(train_data, train_label)
-            end_train = current_ms()
+            with suppress_stdout():
+                start_train = current_ms()
+                if clf_type == SUPERVISED:
+                    clf.fit(train_data, train_label)  # Supervised training
+                else:
+                    clf.fit(train_data)  # Unsupervised training (no labels)
+                end_train = current_ms()
 
             # Predict on Test Data
             start_predict = current_ms()
-            predicted_labels = clf.predict(test_data)
+            predicted_labels = clf.predict(test_data)  # Supervised/unsupervised prediction
             end_predict = current_ms()
+
+            # Calculate time taken
+            train_time = end_train - start_train
+            predict_time = end_predict - start_predict
 
             # Evaluate Model
             acc_score = accuracy_score(test_label, predicted_labels)
@@ -146,14 +74,17 @@ if __name__ == "__main__":
 
             tn, fp, fn, tp = confusion_matrix(test_label, predicted_labels).ravel()
 
+            prediction_time = end_predict - start_predict
+            train_time = end_train - start_train
+            
             print(
                 "%s (n_estimators=%s): Accuracy: %.4f, Train time: %dms, Prediction time: %dms, MCC: %.6f, TP: %d, TN: %d, FN: %d, FP: %d"
                 % (
-                    clf.__class__.__name__,
+                    getattr(clf, '_model_name', clf.__class__.__name__),
                     getattr(clf, 'n_estimators', 'N/A'),
                     acc_score,
-                    end_train - start_train,
-                    end_predict - start_predict,
+                    train_time,
+                    prediction_time,
                     mcc,
                     tp,
                     tn,
@@ -173,6 +104,10 @@ if __name__ == "__main__":
                 best_mcc = mcc
                 best_mcc_clf = clf
                 best_mcc_n = getattr(clf, 'n_estimators', 'N/A')
+                
+            if prediction_time <= best_predict_time and prediction_time > 0:
+                best_predict_time = prediction_time
+                best_predict_time_clf = clf
 
         except Exception as e:
             print(f"Error evaluating classifier {clf.__class__.__name__}: {e}")
@@ -188,6 +123,11 @@ if __name__ == "__main__":
     print(f"Classifier: {best_mcc_clf.__class__.__name__}")
     print(f"n_estimators: {best_mcc_n}")
     print(f"MCC Score: {best_mcc:.6f}")
+    
+    # Print the best classifier based on prediction time
+    print("\nBest Classifier based on prediction time")
+    print(f"Classifier: {best_predict_time_clf.__class__.__name__}")
+    print(f"Time : {best_predict_time:.6f}ms")
     
     # Export model prefering best accuracy model over best_mcc
     # I comment the dump because, XGBClassifier does not provide the best accuracy every time

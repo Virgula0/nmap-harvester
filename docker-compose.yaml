@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     networks:
       custom_bridge:
-        ipv4_address: 172.31.0.2 # Change it eventually
+        ipv4_address: 172.31.0.2 # Change it eventually if you changed your subnet
     volumes:
       - .:/tmp/temp
     stdin_open: true

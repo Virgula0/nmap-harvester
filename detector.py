@@ -25,10 +25,7 @@ threads = []
 
 # Graceful shutdown handler
 def signal_handler(sig, frame):
-    console.print("[bold red]\n[INFO] Shutting down gracefully...[/bold red]")
-    for thread in threads:
-        if thread.is_alive():
-            thread.join(timeout=1)
+    console.print("[bold red]\n[INFO] Shutting down...[/bold red]")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
@@ -58,17 +55,18 @@ def main():
     console.print("[bold green][INFO] Model loaded successfully![/bold green]")
     
     if os.geteuid() != 0:
-        sys.exit("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
+        console.print("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
+        sys.exit(-1)
     
     if os.path.exists(RUNTIME_CAPTURE):
         os.remove(RUNTIME_CAPTURE)
     
     # Start background threads
-    capture_thread = threading.Thread(target=capture_packets, args=(INTERFACE, IP, RUNTIME_CAPTURE))
+    capture_thread = threading.Thread(target=capture_packets, args=(INTERFACE, IP, RUNTIME_CAPTURE), daemon=True)
     threads.append(capture_thread)
     capture_thread.start()
     
-    injector_thread = threading.Thread(target=run_injector)
+    injector_thread = threading.Thread(target=run_injector, daemon=True)
     threads.append(injector_thread)
     injector_thread.start()
     
@@ -108,7 +106,6 @@ def main():
                 f"Normal: {normal_count} ({normal_percentage:.2f}%)\n"
                 f"Anomalies: {anomaly_count} ({anomaly_percentage:.2f}%)\n"
                 f"ANOMALY DETECTED? {anomaly_detected}\n",
-                "\n"
             )
             
             save_logs(result_message)

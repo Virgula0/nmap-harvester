@@ -2,6 +2,7 @@ import time
 import random
 import nmap
 import requests as r
+from utils import save_logs
 
 SLEEP_TIME = 1
 PROBABILITY_INJECTION = 10 # 10% of probabilities to inject an anomaly each SLEEP_TIME seconds
@@ -20,22 +21,25 @@ def choose_random_port():
 def run_nmap(IP_ADDRESS):
     nm.scan(IP_ADDRESS, '0-50')
 
-def run_injector(IP_ADDRESS='localhost'):
-    
+def run_injector(IP_ADDRESS='127.0.0.1'):
     while True:
+        message = ""
         if should_inject():
-            print("[INJECTOR] Running NMAP on first 50 ports")
+            message = "[INJECTOR] Running NMAP on first 50 ports"
             run_nmap(IP_ADDRESS)
         else:
             # normal traffic
             PORT = choose_random_port()
             url = f"http://{IP_ADDRESS}:{PORT}/"
-            print(f"[INJECTOR] Normal traffic request on {url}")
+            message = f"[INJECTOR] Normal traffic request on {url}"
             try:
-                r.get(url, timeout=5)
+                r.get(url, timeout=1)
             except Exception as ex:
-                pass
-            
+                pass # ignore if port is closed
+        
+        print(message)
+        save_logs((message + "\n",))
+
         time.sleep(SLEEP_TIME)
         continue
         

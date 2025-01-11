@@ -4,7 +4,7 @@ A supervised machine learning model designed for detecting `NMAP` port scanning,
 
 ---
 
-## Introduction
+# Introduction
 
 This project aims to build a supervised machine learning model to detect real-time `NMAP` port scanning activities.
 
@@ -23,6 +23,7 @@ In the project the following files have the described functions:
 - `interceptor.py` -> monitor for collecting data
 - `algo_chooser.py` -> script for choosing the best machine learning algorithm
 - `injector.py` -> injects nmap scans or run normal http requests
+- `classifiers.py` -> define a big list of classifiers for `algo_chooser.py`
 - `noiser.py` -> helper script for sending normal http requests
 - `detector.py` -> runs a real-time demo of the model using previously mentioned scripts internally
 - `model` directory -> contains exported model
@@ -36,13 +37,27 @@ In the project the following files have the described functions:
 > For example: `detector.py` (https://github.com/Virgula0/nmap-harvester/blob/main/detector.py#L60) contains a check to run with `root` privileges and this check should be commented if the environment is different from Unix.
 > This disclaimer has been inserted because I noticed the usage of other operating systems during the course lectures. Running the `detector.py` on a virtual environment should work because everything is set to run on the `localhost` interface, but even here, the creation of the dataset phases may not work because of interfaces used by pyshark on a virtual machine. A solution can be to create another container and let the 2 isolated container to communicate between them, but this is up to the readers to investigate better eventually.
 
+## Requirements
+
+Install dependencies with:
+
+```bash
+   python3.11 -m venv venv && \ # python3.13 has been tested to have some problems when trying to install catboost
+   source venv/bin/activate && \
+   pip install -r requirements.txt
+```
+
+ > [!WARNING]
+ > `cargo` (rust) may be needed for `catboost` ML model.
+ > Use this script to install it `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` (Use default settings)
+
 ---
 
-## Train Dataset Creation `datasets/train/merged.csv`
+# Train Dataset Creation `datasets/train/merged.csv`
 
 Understanding TCP connections is important for building the dataset. When a TCP packet is sent over the network, it carries specific flags that facilitate the `3-Way Handshake`. `NMAP` can manipulate these flags to evade detection while performing rapid port scans. We cannot create a dataset where each row of the dataset represents a packet since for detecting `NMAP`, multiple packets are needed, so the idea:
 
-### Key Dataset Characteristics 
+## Key Dataset Characteristics 
 
 - **Session-Based Rows:** Instead of logging each packet individually, each row in the dataset represents a **session** (requests + responses).
 - **Flag Summation:** Flags (`SYN`, `ACK`, `FIN`, etc.) are aggregated across the same session. For example:  
@@ -50,7 +65,7 @@ Understanding TCP connections is important for building the dataset. When a TCP 
   - The dataset contains 6 (`SYN`,`ACK`,`RST`,`FIN`,`URG`,`PSH`) out of 9 TCP flags. NMAP uses those flags, but in the case of other new attacks, the dataset can be rebuilt using other TCP flags, too.
 - **Duration feature**: `start_response_time`, and`end_response_time`  will be set to 0 if only a packet has been found in the entire session. In this case, the duration will be only `end_request_time` - `start_request_time` otherwise the session duration is `end_response_time` - `start_request_time`
 
-### Example Dataset Row (normal tcp scan on a closed port 3306)
+## Example Dataset Row (normal tcp scan on a closed port 3306)
 
 ```csv
 start_request_time,end_request_time,start_response_time,end_response_time,duration,src_ip,dst_ip,src_port,dst_port,SYN,ACK,FIN,RST,URG,PSH,label
@@ -68,7 +83,7 @@ More technical explanations are present via comments in `interceptor.py`. The sc
 > [!NOTE]
 > During the data collection, some ports were opened intentionally on the host to differentiate some rows in the dataset. For example, an HTTP server on port 1234 has been opened using the following method: `python3 -m http.server 1234`plus, eventually other ports that had already been opened from other services between the range 0-5000.
 
-### Common `NMAP` Scans
+## Common `NMAP` Scans
 
 The following commands were run from the container called `traffic_generator` (the container) having the `sudo python3 interceptor.py` running locally.
 
@@ -91,7 +106,7 @@ The final dataset consists of a merge (`merged.csv`) used for training the model
 
 ---
 
-## Machine Learning Model
+# Machine Learning Model
 
 The `XGBClassifier` was selected as the final model due to its reliable performance in key areas:
 
@@ -99,19 +114,19 @@ The `XGBClassifier` was selected as the final model due to its reliable performa
 2. Fast prediction speed (`~3ms` on average for 15,000 rows)
 3. High MCC score (`~0.91`)
 
-### Why accuracy metric is important?
+## Why accuracy metric is important?
 
 The dataset generated for training purposes contains a balanced example of normal/anomaly behaviours, half normal and half anomalies, which get shuffled during the dataset splitting phase. Thus, accuracy is an important statistic that can be considered in this case.
 
-### Why MCC is not that important?
+## Why MCC is not that important?
 
 MCC should normally be preferred when unbalanced datasets are present. This is not our case, but it is taken into account even if it has a minor weight in the final machine-learning model choice.
 
-### Why the prediction speed is so important?
+## Why the prediction speed is so important?
 
-The prediction speed played a significant role in choosing this model, as it allows efficient analysis of large volumes of network traffic in real-time. The `RandomForestClassifier` is pretty similar in accuracy (maybe even better sometimes), but it has a slower prediction time in average of `~15ms` compared to `~3ms` of `XGBClassifier`
+The prediction speed played a significant role in choosing this model, as it allows efficient analysis of large volumes of network traffic in real-time. The `RandomForestClassifier` is pretty similar in accuracy (maybe even better sometimes), but it has a slower prediction time in average of `~15ms` compared to `~3ms` of `XGBClassifier`. Of course it's useless to underline that even if `DeepSVDD` predicts in `1ms`, given it's low accuracy rate it cannot be even considered.
 
-### Model Performance
+## Model Performance
 
 ```
 Dataset loaded with 15192 records.
@@ -129,21 +144,28 @@ Dataset preprocessed successfully.
 
 Dataset split into training and testing sets.
 
-RandomForestClassifier (n_estimators=210): Accuracy: 0.9513, Train time: 432ms, Prediction time: 16ms, MCC: 0.902033, TP: 661, TN: 785, FN: 33, FP: 41
-
+RandomForestClassifier (n_estimators=210): Accuracy: 0.9566, Train time: 411ms, Prediction time: 16ms, MCC: 0.914073, TP: 744, TN: 710, FN: 16, FP: 50
 ....
 
-XGBClassifier (n_estimators=210): Accuracy: 0.9507, Train time: 65ms, Prediction time: 3ms, MCC: 0.919739, TP: 660, TN: 785, FN: 34, FP: 41
+XGBClassifier (n_estimators=1): Accuracy: 0.9572, Train time: 9ms, Prediction time: 2ms, MCC: 0.915337, TP: 744, TN: 711, FN: 16, FP: 49
+
+....
+DeepSVDD (n_estimators=N/A): Accuracy: 0.3868, Train time: 14032ms, Prediction time: 1ms, MCC: -0.348550, TP: 5, TN: 583, FN: 755, FP: 177
+....
 
 Best Classifier based on Accuracy
-Classifier: RandomForestClassifier
-n_estimators: 210
-Accuracy Score: 0.9513
+Classifier: XGBClassifier
+n_estimators: 1
+Accuracy Score: 0.9572
 
 Best Classifier based on MCC
 Classifier: XGBClassifier
-n_estimators: 210
-MCC Score: 0.919739
+n_estimators: 1
+MCC Score: 0.915337
+
+Best Classifier based on prediction time
+Classifier: DeepSVDD
+Time : 1.000000ms
 ```
 
 ---
@@ -154,11 +176,15 @@ The training dataset, `datasets/train/merged.csv`, is generated using the follow
 
 1. Create an isolated Docker environment for sending clean packets:
    ```bash
-   docker compose up --build
+   docker compose up --build -d
    ```
 2. Access the container:
    ```bash
    docker attach traffic_generator
+   ``` 
+   or
+   ```bash
+   docker exec -ti traffic_generator /bin/bash
    ```
 3. Run the interceptor on the host from another terminal:
    ```bash
@@ -179,6 +205,7 @@ The training dataset, `datasets/train/merged.csv`, is generated using the follow
    ```
 5. Run noise traffic for legitimate requests, from the container:
    ```bash
+   cd /tmp/temp
    python3 noiser.py
    ```
 6. Merge datasets:
@@ -191,7 +218,7 @@ The training dataset, `datasets/train/merged.csv`, is generated using the follow
    python3 algo_chooser.py
    ```
 
-### Delayed Dataset
+## Delayed Dataset
 
 A delayed dataset can be created by introducing delays between requests:
 
@@ -201,7 +228,7 @@ nmap -p 1-10000 --scan-delay 1s 172.31.0.1
 
 You can also adjust the delay in legitimate requests by modifying `SLEEP_SECOND` in `noiser.py`.
 
-Results:
+Results confirm the choise of `XGBClassifier`
 
 ```
 Dataset loaded with 11351 records.                                                                                                                                                                                  
@@ -218,18 +245,31 @@ Dataset preprocessed successfully.
 
 Dataset split into training and testing sets.
 
+RandomForestClassifier (n_estimators=210): Accuracy: 1.0000, Train time: 327ms, Prediction time: 11ms, MCC: 1.000000, TP: 752, TN: 384, FN: 0, FP: 0
 ....
-XGBClassifier (n_estimators=210): Accuracy: 1.0000, Train time: 28ms, Prediction time: 3ms, MCC: 1.000000, TP: 743, TN: 393, FN: 0, FP: 0
+XGBClassifier (n_estimators=210): Accuracy: 1.0000, Train time: 28ms, Prediction time: 3ms, MCC: 1.000000, TP: 752, TN: 384, FN: 0, FP: 0
+....
+DeepSVDD (n_estimators=N/A): Accuracy: 0.4833, Train time: 10273ms, Prediction time: 1ms, MCC: 0.270419, TP: 173, TN: 376, FN: 579, FP: 8
+
+Best Classifier based on Accuracy
+Classifier: XGBClassifier
+n_estimators: 210
+Accuracy Score: 1.0000
 
 Best Classifier based on MCC
 Classifier: XGBClassifier
 n_estimators: 210
 MCC Score: 1.000000
+
+Best Classifier based on prediction time
+Classifier: DeepSVDD
+Time : 1.000000ms
 ```
 
 ---
 
-## Running the Detector
+# Running the Detector
+
 The `detector.py` represents the live-demo for NMAP attacks detection.
 
 To run the detector:
@@ -247,28 +287,20 @@ sudo python3 detector.py
 
 ---
 
-## Requirements
-
-Install dependencies with:
-
-```bash
-python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
-```
-
 ---
 
-## Demonstration Video
+# Demonstration Video
 
 https://github.com/user-attachments/assets/f10773c6-742e-4394-913e-42beb0cc3683
 
-## References
+# References
 
-- [Medium Article on `NMAP` Detection](https://medium.com/@thismanera/nmap-detection-with-wireshark-e780c73a0823)
+- [Medium Article on `NMAP` Detection using Wireshark](https://medium.com/@thismanera/nmap-detection-with-wireshark-e780c73a0823)
 - [Unix Stack Exchange - Detecting `NMAP` Scans](https://unix.stackexchange.com/questions/166734/whats-the-most-effective-way-to-detect-nmap-scans)
 
 ---
 
-## External Dependencies
+# External Dependencies
 
 - `pyshark`
 - `python-nmap`
