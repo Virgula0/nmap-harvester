@@ -47,9 +47,9 @@ Install dependencies with:
    pip install -r requirements.txt
 ```
 
- > [!WARNING]
- > `cargo` (rust) may be needed for `catboost` ML model.
- > Use this script to install it `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` (Use default settings)
+> [!WARNING]
+> `cargo` (rust) may be needed for `catboost` ML model.
+> Use this script to install it `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` (Use default settings)
 
 ---
 
