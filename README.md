@@ -230,6 +230,7 @@ MCC Score: 1.000000
 ---
 
 ## Running the Detector
+The `detector.py` represents the live-demo for NMAP attacks detection.
 
 To run the detector:
 
@@ -240,6 +241,9 @@ sudo python3 detector.py
 - The detector uses `interceptor.py` to monitor session packets.
 - `injector.py` simulates normal HTTP traffic with occasional `NMAP` scans (10% probability).
 - If at least **30%** of session packets are flagged as anomalies, the system will detect an ongoing `NMAP` attack.
+
+> [!TIP]
+> When running the script, a log file containing all events called `logs` is created in the main project directory.
 
 ---
 
