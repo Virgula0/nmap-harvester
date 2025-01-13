@@ -51,12 +51,13 @@ def generate_output(data, anomaly_detected, normal_count, anomaly_count, normal_
     return table
 
 def main():
-    model = joblib.load(MODEL_PATH)
-    console.print("[bold green][INFO] Model loaded successfully![/bold green]")
     
     if os.geteuid() != 0:
         console.print("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
         sys.exit(-1)
+    
+    model = joblib.load(MODEL_PATH)
+    console.print(f"[bold green][INFO] Model loaded successfully! {type(model)}[/bold green]")
     
     if os.path.exists(RUNTIME_CAPTURE):
         os.remove(RUNTIME_CAPTURE)
