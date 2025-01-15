@@ -110,9 +110,9 @@ The final dataset consists of a merge (`merged.csv`) used for training the model
 
 The `XGBClassifier` was selected as the final model due to its reliable performance in key areas:
 
-1. High accuracy score (`~0.95`)
-2. Fast prediction speed (`~3ms` on average for 15,000 rows)
-3. High MCC score (`~0.91`)
+1. High accuracy score (`~0.96`)
+2. Fast prediction speed (`~4ms` on average for 20,000 rows)
+3. High MCC score (`~0.927`)
 
 ## Why accuracy metric is important?
 
@@ -124,7 +124,7 @@ MCC should normally be preferred when unbalanced datasets are present. This is n
 
 ## Why the prediction speed is so important?
 
-The prediction speed played a significant role in choosing this model, as it allows efficient analysis of large volumes of network traffic in real-time. The `RandomForestClassifier` is pretty similar in accuracy (maybe even better sometimes), but it has a slower prediction time in average of `~15ms` compared to `~3ms` of `XGBClassifier`. Of course it's useless to underline that even if `DeepSVDD` predicts in `1ms`, given it's low accuracy rate it cannot be even considered.
+The prediction speed played a significant role in choosing this model, as it allows efficient analysis of large volumes of network traffic in real-time. The `RandomForestClassifier` is pretty similar in accuracy (maybe even better sometimes), but it has a slower prediction time in average of `~15ms` compared to `~4ms` of `XGBClassifier`. Of course it's useless to underline that even if `DeepSVDD` predicts in `2ms`, given it's low accuracy rate it cannot be even considered.
 
 ## Model Performance
 
@@ -132,25 +132,25 @@ The prediction speed played a significant role in choosing this model, as it all
 Dataset loaded with 15192 records.
 Dataset preprocessed successfully.
 
-+------------+-----+-----+-----+-----+-----+-----+-------+
-|  duration  | SYN | ACK | FIN | RST | URG | PSH | label |
-+------------+-----+-----+-----+-----+-----+-----+-------+
-|  0.000030  |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-|  0.000013  |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-|  0.000012  |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-|  0.000010  |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-|  0.000011  |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-+------------+-----+-----+-----+-----+-----+-----+-------+
++------------+-----+-----+-----+-----+-----+-----+--------+
+|  duration   | SYN | ACK | FIN | RST | URG | PSH | label |
+|-------------|-----|-----|-----|-----|-----|-----|-------|
+|  0.000037   |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
+|  0.000016   |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
+|  0.000014   |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
+|  0.000015   |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
+|  0.000016   |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
++------------+-----+-----+-----+-----+-----+-----+--------+
 
 Dataset split into training and testing sets.
 
-RandomForestClassifier (n_estimators=210): Accuracy: 0.9566, Train time: 411ms, Prediction time: 16ms, MCC: 0.914073, TP: 744, TN: 710, FN: 16, FP: 50
+KNeighborsClassifier (n_estimators=N/A): Accuracy: 0.9625, Train time: 12ms, Prediction time: 184ms, MCC: 0.927413, TP: 911, TN: 1015, FN: 74, FP: 1
 ....
-
-XGBClassifier (n_estimators=1): Accuracy: 0.9572, Train time: 9ms, Prediction time: 2ms, MCC: 0.915337, TP: 744, TN: 711, FN: 16, FP: 49
-
+RandomForestClassifier (n_estimators=210): Accuracy: 0.9625, Train time: 599ms, Prediction time: 21ms, MCC: 0.927413, TP: 911, TN: 1015, FN: 74, FP: 1
 ....
-DeepSVDD (n_estimators=N/A): Accuracy: 0.3868, Train time: 14032ms, Prediction time: 1ms, MCC: -0.348550, TP: 5, TN: 583, FN: 755, FP: 177
+XGBClassifier (n_estimators=210): Accuracy: 0.9625, Train time: 67ms, Prediction time: 4ms, MCC: 0.927413, TP: 911, TN: 1015, FN: 74, FP: 1
+....
+DeepSVDD (n_estimators=N/A): Accuracy: 0.5722, Train time: 19941ms, Prediction time: 2ms, MCC: 0.266606, TP: 129, TN: 1016, FN: 856, FP: 0
 ....
 
 Best Classifier based on Accuracy
@@ -165,7 +165,7 @@ MCC Score: 0.915337
 
 Best Classifier based on prediction time
 Classifier: DeepSVDD
-Time : 1.000000ms
+Time : 2.000000ms
 ```
 
 ---
@@ -303,4 +303,3 @@ https://github.com/user-attachments/assets/f10773c6-742e-4394-913e-42beb0cc3683
 # External Dependencies
 
 - `pyshark`
-- `python-nmap`

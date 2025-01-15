@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # Main script
 if __name__ == "__main__":
     # Load Dataset
-    df = pd.read_csv('./datasets/train/merged.csv')
+    df = pd.read_csv('./datasets/tests/merged.csv')
     print(f"Dataset loaded with {len(df)} records.")
 
     # Preprocess Dataset

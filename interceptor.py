@@ -16,7 +16,7 @@ REQUEST_PATTERNS = {
     "STEALTH_SCAN": lambda f: (f['SYN'] == 1) or (f['RST'] == 1),
     
     "FIN_SCAN": lambda f: f['FIN'] == 1,
-    
+
     "NULL_SCAN": lambda f: all(v == 0 for v in f.values()),
     
     "XMAS_SCAN": lambda f: f['FIN'] == 1 and f['PSH'] == 1 and f['URG'] == 1
@@ -37,7 +37,8 @@ RESPONSE_PATTERNS = {
 def capture_packets(interface='lo',
                     scanner_ip='127.0.0.1',
                     output_file='packet_dataset.csv',
-                    label=None):
+                    label=None
+                    ):
     """
     Capture TCP traffic, aggregate request/response packet data, and log them in CSV.
     """
@@ -84,8 +85,10 @@ def capture_packets(interface='lo',
             with open(output_file, mode='a', newline='') as csv_file:
                 writer = csv.writer(csv_file)
                 for session_key, ss in list(sessions.items()):
+                        
                     # Each seconds we try to save a session raw if WINDOW_SIZE time is elapsed
                     if (current_time - ss['last_updated']) > WINDOW_SIZE:
+                        
                         end_time = ss['end_response_time'] or ss['end_request_time'] # give priority to end_response_time
                         if ss['end_response_time'] is None:
                             ss['start_response_time'] = 0
@@ -128,33 +131,53 @@ def capture_packets(interface='lo',
     for packet in capture.sniff_continuously():
         if 'ip' not in packet or 'tcp' not in packet:
             continue
-
-        src_ip = packet.ip.src
+        
+        src_ip = packet.ip.src  
         dst_ip = packet.ip.dst
         src_port = packet.tcp.srcport
         dst_port = packet.tcp.dstport
         timestamp = packet.sniff_time
-
+        
         tcp_flags = get_tcp_flags(packet)
         
-        session_key = tuple(sorted([src_ip, dst_ip, src_port, dst_port]))
-        print(tcp_flags)
-        
         # Detect Request Patterns
-        # Check direction: is it from the scanner (request) or from the target (response)?
-        is_request = (src_ip == scanner_ip)
-
-        # Update request or response times
-        if is_request:
-            if sessions[session_key]['start_request_time'] is None:
-                sessions[session_key]['start_request_time'] = timestamp
-            # Continuously update end_request_time to the latest request packet
-            sessions[session_key]['end_request_time'] = timestamp
+        # Check direction: is it from the scanner (request) or from the target (response)? 
+        # Adjust session_key for FIN, NULL, XMAS scans
+        if any(pattern(tcp_flags) for pattern in [
+            REQUEST_PATTERNS['FIN_SCAN'],
+            REQUEST_PATTERNS['NULL_SCAN'],
+            REQUEST_PATTERNS['XMAS_SCAN']
+        ]):
+            session_key = tuple([src_port, dst_port])
+            reversed_session_key = session_key # set reversed_session_key since these scan could not contain a response, dst_port is the only one not changing
         else:
-            if sessions[session_key]['start_response_time'] is None:
-                sessions[session_key]['start_response_time'] = timestamp
-            # Continuously update end_response_time to the latest response packet
-            sessions[session_key]['end_response_time'] = timestamp
+            session_key = tuple([src_port, dst_port])
+            reversed_session_key = tuple([dst_port, src_port])  
+        
+        is_request = True # assume it is a request
+        
+        if reversed_session_key in sessions:
+            # If the reversed session_key exists, consider it not a request but a response
+            session_key = reversed_session_key  # Use the reversed session_key for further updates
+            is_request = False
+            
+        #print(src_port)
+        # Update request timings
+        if is_request:
+            
+            print("REQUEST" + str(tcp_flags))
+            if any(pattern(tcp_flags) for pattern in REQUEST_PATTERNS.values()):
+                if sessions[session_key]['start_request_time'] is None:
+                    sessions[session_key]['start_request_time'] = timestamp
+                sessions[session_key]['end_request_time'] = timestamp
+        else:
+            
+            print("RESPONSE" + str(tcp_flags))
+            if any(pattern(tcp_flags) for pattern in RESPONSE_PATTERNS.values()):
+                if sessions[session_key]['start_response_time'] is None:
+                    sessions[session_key]['start_response_time'] = timestamp
+                sessions[session_key]['end_response_time'] = timestamp
+
 
         # Update IPs and Ports
         sessions[session_key]['src_ips'].add(src_ip)
@@ -204,7 +227,7 @@ def capture_packets(interface='lo',
     RUN from main for creating train datasets assigning labels 0 and 1 based on the traffic type
 """
 if __name__ == "__main__":
-    output_file = 'datasets/tests/bad.csv'
+    output_file = 'datasets/wewe/bad.csv'
     capture_packets(
         interface='br-442842f5362e', # Change it based on your interface name, to grab it, do an ifconfig from terminal
         scanner_ip='172.31.0.2', # change it based on ipv4_address from docker compose file
