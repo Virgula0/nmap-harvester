@@ -161,18 +161,18 @@ def capture_packets(interface='lo',
             session_key = reversed_session_key  # Use the reversed session_key for further updates
             is_request = False
             
-        #print(src_port)
+        # print(src_port)
         # Update request timings
         if is_request:
             
-            print("REQUEST" + str(tcp_flags))
+            #print("REQUEST" + str(tcp_flags))
             if any(pattern(tcp_flags) for pattern in REQUEST_PATTERNS.values()):
                 if sessions[session_key]['start_request_time'] is None:
                     sessions[session_key]['start_request_time'] = timestamp
                 sessions[session_key]['end_request_time'] = timestamp
         else:
             
-            print("RESPONSE" + str(tcp_flags))
+            #print("RESPONSE" + str(tcp_flags))
             if any(pattern(tcp_flags) for pattern in RESPONSE_PATTERNS.values()):
                 if sessions[session_key]['start_response_time'] is None:
                     sessions[session_key]['start_response_time'] = timestamp
@@ -215,19 +215,19 @@ def capture_packets(interface='lo',
         
 
     # From Container:
-    nmap -sT 172.31.0.1 -p 0-5000 # TCP Scan
-    nmap -sS 172.31.0.1 -p 0-5000 # Stealth Scan
-    nmap -sF 172.31.0.1 -p 0-5000 # FIN Scan
-    nmap -sN 172.31.0.1 -p 0-5000 # NULL Scan
-    nmap -sX 172.31.0.1 -p 0-5000 # XMAS Scan
+    nmap -sT 172.31.0.1 -p 0-2500 # TCP Scan
+    nmap -sS 172.31.0.1 -p 0-2500 # Stealth Scan
+    nmap -sF 172.31.0.1 -p 0-2500 # FIN Scan
+    nmap -sN 172.31.0.1 -p 0-2500 # NULL Scan
+    nmap -sX 172.31.0.1 -p 0-2500 # XMAS Scan
     
     # Delayed scan (second datasets)    
-    nmap -p 1-10000 --scan-delay 1s 172.31.0.1
+    nmap -p 1-5000 --scan-delay 1s 172.31.0.1
 
     RUN from main for creating train datasets assigning labels 0 and 1 based on the traffic type
 """
 if __name__ == "__main__":
-    output_file = 'datasets/wewe/bad.csv'
+    output_file = 'datasets/train/bad.csv'
     capture_packets(
         interface='br-442842f5362e', # Change it based on your interface name, to grab it, do an ifconfig from terminal
         scanner_ip='172.31.0.2', # change it based on ipv4_address from docker compose file

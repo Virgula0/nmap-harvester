@@ -5,7 +5,7 @@ import requests as r
 from utils import save_logs
 
 SLEEP_TIME = 1
-PROBABILITY_INJECTION = 10 # 10% of probabilities to inject an anomaly each SLEEP_TIME seconds
+PROBABILITY_INJECTION = 10 # 30% of probabilities to inject an anomaly each SLEEP_TIME seconds
 NUMBER_OF_PORTS = 30
 INJECTION_TIME_SLEEP = 5
 
