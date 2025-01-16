@@ -19,11 +19,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Auto Rebase Before Commit
+      - name: Auto Rebase with Cirrus Actions
         uses: cirrus-actions/rebase@1.8
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
