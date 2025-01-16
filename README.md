@@ -66,7 +66,7 @@ Understanding TCP connections is important for building the dataset. When a TCP 
   - The dataset contains 6 (`SYN`,`ACK`,`RST`,`FIN`,`URG`,`PSH`) out of 9 TCP flags. NMAP uses those flags, but in the case of other new attacks, the dataset can be rebuilt using other TCP flags, too.
 - **Duration feature**: `start_response_time`, and`end_response_time`  will be set to 0 if only a packet has been found in the entire session. In this case, the duration will be only `end_request_time` - `start_request_time` otherwise the session duration is `end_response_time` - `start_request_time`
 
-## Example Dataset Row (normal tcp scan on a closed port 3306)
+## Example Dataset Row (normal tcp scan on a closed port 22)
 
 ```csv
 2025-01-15 12:49:08.025898,2025-01-15 12:49:08.025898,2025-01-15 12:49:08.025946,2025-01-15 12:49:08.025946,4.8e-05,"['172.31.0.2', '172.31.0.1']","['172.31.0.2', '172.31.0.1']","['52666', '22']","['52666', '22']",1,1,0,1,0,0,1
