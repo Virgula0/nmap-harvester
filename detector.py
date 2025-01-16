@@ -16,8 +16,9 @@ from injector import run_injector
 SLEEP_SECONDS = 1
 MODEL_PATH = 'model/model.pkl'
 ANOMALY_PERCENTAGE = 30
+FAKE_SCANNER_IP = '255.255.255.255'
 
-INTERFACE = 'lo'
+INTERFACE = 'lo' # change this with your interface
 IP = "127.0.0.1"
 
 console = Console()
