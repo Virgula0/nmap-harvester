@@ -131,3 +131,4 @@ jobs:
         with:
           commit_message: "Generate PDF"
           file_pattern: docs/docs.pdf
+          skip_checkout: true
