@@ -19,6 +19,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Auto Rebase Before Commit
+        uses: cirrus-actions/rebase@1.8
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref_name }}
+      
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: pandoc texlive-xetex python3 python3-pip
