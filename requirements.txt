@@ -45,7 +45,6 @@ pyod==2.0.3
 pyparsing==3.2.1
 pyshark==0.6
 python-dateutil==2.9.0.post0
-python-nmap==0.7.1
 pytz==2024.2
 requests==2.32.3
 rich==13.9.4

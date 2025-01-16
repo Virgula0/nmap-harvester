@@ -4,7 +4,7 @@ import requests
 import time
 
 TARGET_HOST = "172.31.0.1"  # Replace with the actual target IP/hostname
-NUM_RANDOM_PORTS = 8000     # Number of random ports to try each cycle
+NUM_RANDOM_PORTS = 12000     # Number of random ports to try each cycle
 SLEEP_SECONDS = 0        # Time to wait between cycles
 
 def generate_noise():

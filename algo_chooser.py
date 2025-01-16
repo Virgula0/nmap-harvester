@@ -1,5 +1,4 @@
 import pandas as pd
-import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, matthews_corrcoef
 
@@ -13,7 +12,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # Main script
 if __name__ == "__main__":
     # Load Dataset
-    df = pd.read_csv('./datasets/train/merged.csv')
+    df = pd.read_csv('./datasets/delayed/merged.csv')
     print(f"Dataset loaded with {len(df)} records.")
 
     # Preprocess Dataset
@@ -132,5 +131,3 @@ if __name__ == "__main__":
     # Export model prefering best accuracy model over best_mcc
     # I comment the dump because, XGBClassifier does not provide the best accuracy every time
     # The reason why it has been chosen over other models can be found in README.md
-
-    # joblib.dump(best_acc_clf, "./model/model.pkl")
