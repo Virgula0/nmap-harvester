@@ -66,6 +66,11 @@ def main():
             sys.exit(-1)
     
     model = joblib.load(MODEL_PATH)
+    
+    if not model:
+        console.print("[bold red]Unable to load the model[/bold red]")
+        sys.exit(-1)
+    
     console.print(f"[bold green][INFO] Model loaded successfully! {type(model)}[/bold green]")
     
     if os.path.exists(RUNTIME_CAPTURE):
