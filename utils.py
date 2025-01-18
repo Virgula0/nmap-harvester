@@ -3,6 +3,19 @@ import pandas as pd
 
 LOG_FILE = 'logs'
 RUNTIME_CAPTURE = 'datasets/runtime/capture.csv'
+OS_INSTALLATION_PATHS = [
+    "/bin",
+    "/sbin",
+    "/usr/bin",
+    "/usr/sbin",
+    "/opt",
+    "/usr/local/bin",
+    "/usr/local/sbin",
+    "/snap/bin",
+    "/var/lib/flatpak/app",
+    "/libexec",
+    "/usr/libexec"
+]
 
 # Utility function for time measurement
 def current_ms() -> int:
