@@ -35,7 +35,7 @@ In the project the following files have the described functions:
 
 > [!WARNING]
 > The entire software is designed for running on a Linux environment and although the only changes needed for running on another operating system are interface names, some checks may fail due to different environments.
-> For example: `detector.py` contains a check to run with `root` privileges and this check should be commented if the environment is different from Unix. This can be disabled using `--no-strick-check` argument when running the script.
+> For example: `detector.py` contains a check to run with `root` privileges and this check can be disabled if environment is different from Unix. To disable checks you can pass `--no-strick-check` argument to the script.
 > This disclaimer has been inserted because I noticed the usage of other operating systems during the course lectures. Running the `detector.py` on a virtual environment should work because everything is set to run on the `localhost` interface, but even here, the creation of the dataset phases may not work because of interfaces used by pyshark on a virtual machine. A solution can be to create another container and let the 2 isolated container to communicate between them, but this is up to the readers to investigate better eventually.
 
 ## Requirements
