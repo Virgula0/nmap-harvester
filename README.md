@@ -276,7 +276,7 @@ Time : 1.000000ms
 # Running the Detector
 
 The `detector.py` represents the live-demo for NMAP attacks detection.
-The host is required to having `nmap` installed. 
+The host is required to having `nmap` and `tshark` installed. 
 
 Depending on your distro
 
@@ -286,26 +286,26 @@ sudo pacman && sudo pacman -S nmap
 flatpak install nmap
 ```
 
-You need to install `tshark` needed for `pyshark`
+You need to install `tshark` for `pyshark`
 
 ```bash
 sudo apt update -y && sudo apt install tshark -y
 sudo pacman && sudo pacman -S tshark
 ```
 
-At this point you need at least minimal requirements:
+At this point you need at least minimal requirements
 
 ```bash
 pip install -r requirements-minimal.txt
 ```
 
 > [!CAUTION]
-> This is important. The `duration` feature is system depended and is calculated using time differentials on my local system.
+> This is important. The `duration` feature is system depended and is calculated using time differentials on a given local system.
 > Since on another system, duration feature can be slightly different because of pyshark times, the behaviour used in the pre-trained
 > model (and so the live demo `detector.py`) can be affected by this.
 > 
-> A solution is to re-create the training set again based on the new system using the train dataset creation procedure already described, and then, 
-> re-export the model by training it on new intercepted data. 
+> A solution is to re-create the training set again using `dataset_and_train.py` or alternatively using
+> the train dataset creation procedure already described, and then, re-export the model by training it on new intercepted data. 
 > Attack types which are recognized already without depending on the `duration` feature will continue to work properly without re-train.
 
 Create dataset and train
@@ -313,6 +313,9 @@ Create dataset and train
 ```bash
 sudo python3 dataset_and_train.py
 ```
+
+> [!TIP]
+> If you have processes running on localhost which may interfere with the capture and you notice that the `bad.csv` or `good.csv` monitor loop does not exist, you can force to continue by pressing ctrl+c
 
 ```bash
 sudo python3 detector.py

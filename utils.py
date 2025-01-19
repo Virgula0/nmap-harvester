@@ -6,6 +6,7 @@ import subprocess
 LOG_FILE = 'logs'
 RUNTIME_CAPTURE = os.path.join('datasets','runtime','capture.csv')
 OS_INSTALLATION_PATHS = [
+    # Common Unix/Linux directories
     "/bin",
     "/sbin",
     "/usr/bin",
@@ -16,8 +17,19 @@ OS_INSTALLATION_PATHS = [
     "/snap/bin",
     "/var/lib/flatpak/app",
     "/libexec",
-    "/usr/libexec"
+    "/usr/libexec",
+    
+    # Common Windows installation directories
+    "C:\\Program Files",
+    "C:\\Program Files (x86)",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Programs",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Local",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
+    f"C:\\Users\\{os.getlogin()}\\Desktop",  
+    f"C:\\Users\\{os.getlogin()}\\nmap",  
 ]
+
 
 # Utility function for time measurement
 def current_ms() -> int:

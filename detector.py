@@ -14,7 +14,7 @@ from injector import run_injector
 from utils import preprocess_dataset, save_logs, RUNTIME_CAPTURE, OS_INSTALLATION_PATHS
 
 SLEEP_SECONDS = 1
-MODEL_PATH = 'model/model.pkl'
+MODEL_PATH = os.path.join('model','model.pkl')
 ANOMALY_PERCENTAGE = 30
 
 INTERFACE = 'lo' # change this with your interface
@@ -51,15 +51,14 @@ def generate_output(data, anomaly_detected, normal_count, anomaly_count, normal_
 
 def main():
     
+    if not any(os.path.exists(os.path.join(x, "nmap")) for x in OS_INSTALLATION_PATHS):
+        console.print("[bold red]Nmap is required to be installed on the host[/bold red]")
+        sys.exit(-1)
+    
     no_strict_check_flag = "--no-strict-check" in sys.argv if len(sys.argv) > 1 else False
 
     # byass check for nmap installed on the host and root privileges
     if not no_strict_check_flag:
-        
-        if not any(os.path.exists(os.path.join(x, "nmap")) for x in OS_INSTALLATION_PATHS):
-            console.print("[bold red]Nmap is required to be installed on the host[/bold red]")
-            sys.exit(-1)
-    
         if os.geteuid() != 0:
             console.print("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
             sys.exit(-1)
