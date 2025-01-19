@@ -12,11 +12,13 @@ In many cyber-attacks, the initial step often involves port scanning using tools
 
 To address this, this project proposes a machine learning-based approach for identifying TCP port scans initiated by `NMAP`.
 
+The model will detect the following TCP attack types: `normal TCP scan`, `Stealth Scan`, `FIN Scan`, `NULL Scan`, `XMAS Scan`.
+
 How the `interceptor.py` collects all TCP flags can be summered in the following scheme.
 
 <img src="docs/images/attacks.png" alt="Description of the image">
 
-All this attack data are collected by the `interceptor.py` which listens for coming connection on a specific ip address.
+All this attack data are collected by the `interceptor.py` (monitor) which listens for coming connection on a specific ip address.
 
 In the project the following files have the described functions:
 
@@ -61,18 +63,20 @@ Understanding TCP connections is important for building the dataset. When a TCP 
 ## Key Dataset Characteristics 
 
 - **Session-Based Rows:** Instead of logging each packet individually, each row in the dataset represents a **session** (requests + responses).
-- **Flag Summation:** Flags (`SYN`, `ACK`, `FIN`, etc.) are aggregated across the same session. For example:  
+- **Flag Summation:** Flags (`SYN`, `ACK`, `FIN`,`RST`, `URG`, `PSH`) are aggregated across the same session. For example:  
   - If a `SYN` packet is sent by `NMAP` and another `SYN` is sent by the host in the response (whatever the port is closed or opened), the `SYN` column will record a value of `2` because of their sum.
   - The dataset contains 6 (`SYN`,`ACK`,`RST`,`FIN`,`URG`,`PSH`) out of 9 TCP flags. NMAP uses those flags, but in the case of other new attacks, the dataset can be rebuilt using other TCP flags, too.
-- **Duration feature**: `start_response_time`, and`end_response_time`  will be set to 0 if only a packet has been found in the entire session. In this case, the duration will be only `end_request_time` - `start_request_time` otherwise the session duration is `end_response_time` - `start_request_time`
+- **Duration feature**: `start_response_time`, and`end_response_time`  will be set to 0 if only a packet has been found in the entire window session. In this case, the duration will be only `end_request_time` - `start_request_time` otherwise the session duration is `end_response_time` - `start_request_time`
 
 ## Example Dataset Row (normal tcp scan on a closed port 22)
 
 ```csv
+start_request_time,end_request_time,start_response_time,end_response_time,duration,src_ip,dst_ip,src_port,dst_port,SYN,ACK,FIN,RST,URG,PSH,label
+
 2025-01-15 12:49:08.025898,2025-01-15 12:49:08.025898,2025-01-15 12:49:08.025946,2025-01-15 12:49:08.025946,4.8e-05,"['172.31.0.2', '172.31.0.1']","['172.31.0.2', '172.31.0.1']","['52666', '22']","['52666', '22']",1,1,0,1,0,0,1
 ```
 
-- Sessions are grouped using `src_port`, and `dst_port` tuple as keys. However, these grouping keys are excluded and not necessary from the model's training phase.
+- Sessions are grouped using `src_port`, and `dst_port` tuple as keys. However, these grouping keys, along with `src_ip` and `dst_ip` features, are excluded and not necessary from the model's training phase.
 
 - The `duration` feature provides valuable information for distinguishing between legitimate traffic and `NMAP` scans, as legitimate HTTP requests may exhibit similar flag behaviour but differ in timing.
 
@@ -116,7 +120,7 @@ The `XGBClassifier` was selected as the final model due to its reliable performa
 
 ## Why accuracy metric is important?
 
-The dataset generated for training purposes contains a balanced example of normal/anomaly behaviours, half normal and half anomalies, which get shuffled during the dataset splitting phase. Thus, accuracy is an important statistic that can be considered in this case.
+The dataset generated for training purposes contains a balanced example of normal/anomaly behaviours, half normal and half anomalies, which get shuffled during the dataset splitting phase before to reach the training phase. Thus, accuracy is an important statistic metric that must be considered in this case.
 
 ## Why MCC is not that important?
 
@@ -124,14 +128,12 @@ MCC should normally be preferred when unbalanced datasets are present. This is n
 
 ## Why the prediction speed is so important?
 
-The prediction speed played a significant role in choosing this model, as it allows efficient analysis of large volumes of network traffic in real-time. The `RandomForestClassifier` is pretty similar in accuracy (maybe even better sometimes), but it has a slower prediction time in average of `~23ms` compared to `~4ms` of `XGBClassifier`. Of course it's useless to underline that even if `DeepSVDD` predicts in `1ms`, given it's low accuracy rate it cannot be even considered.
+The prediction time played a significant role in choosing this model, as it allows efficient analysis of large volumes of network traffic in real-time at reasonable times. The `RandomForestClassifier` is pretty similar in accuracy (maybe even better sometimes for some millis), but it has a slower prediction time in average of `~23ms` compared to `~4ms` of `XGBClassifier`. Of course it's useless to underline that even if `DeepSVDD` predicts in `1ms`, given it's low accuracy rate it cannot be even considered. The `XGBClassifier` uses an internally `gradient-boosted` (boosting) metalearner which in turn uses decision trees. The great optimization given by the meta-learner layer allows us to obtain a significant improvement in performances in the training and prediction phases maintaining the high accuracy score provided by the decision tree classifier.
 
 ## Model Performance
 
 ```
 Dataset loaded with 24511 records.
-Dataset preprocessed successfully.
-
 +------------+-----+-----+-----+-----+-----+-----+--------+
 | Duration   | SYN | ACK | FIN | RST | URG | PSH | Label |
 |------------|-----|-----|-----|-----|-----|-----|-------|
@@ -141,9 +143,6 @@ Dataset preprocessed successfully.
 | 0.000014   | 1   | 1   | 0   | 1   | 0   | 0   | 1     |
 | 0.000015   | 1   | 1   | 0   | 1   | 0   | 0   | 1     |
 +------------+-----+-----+-----+-----+-----+-----+--------+
-
-Dataset split into training and testing sets.
-
 KNeighborsClassifier (n_estimators=N/A): Accuracy: 0.9910, Train time: 13ms, Prediction time: 271ms, MCC: 0.982114, TP: 1238, TN: 1192, FN: 18, FP: 4
 ....
 RandomForestClassifier (n_estimators=210): Accuracy: 0.9902, Train time: 650ms, Prediction time: 23ms, MCC: 0.980464, TP: 1238, TN: 1190, FN: 18, FP: 6
@@ -152,17 +151,17 @@ XGBClassifier (n_estimators=210): Accuracy: 0.9910, Train time: 86ms, Prediction
 ....
 DeepSVDD (n_estimators=N/A): Accuracy: 0.6970, Train time: 22739ms, Prediction time: 1ms, MCC: 0.492361, TP: 526, TN: 1183, FN: 730, FP: 13
 ....
-
+----------------------------------------
 Best Classifier based on Accuracy
 Classifier: XGBClassifier
 n_estimators: 210
 Accuracy Score: 0.9910
-
+----------------------------------------
 Best Classifier based on MCC
 Classifier: XGBClassifier
 n_estimators: 210
 MCC Score: 0.982114
-
+----------------------------------------
 Best Classifier based on prediction time
 Classifier: DeepSVDD
 Time : 1.000000ms
@@ -242,8 +241,6 @@ We still continue to prefer `XGBClassifier` for the same reasons discussed for t
 
 ```
 Dataset loaded with 10000 records.
-Dataset preprocessed successfully.
-
 +------------+-----+-----+-----+-----+-----+-----+---------+
 |   duration   | SYN | ACK | FIN | RST | URG | PSH | label |
 |--------------|-----|-----|-----|-----|-----|-----|-------|
@@ -253,25 +250,22 @@ Dataset preprocessed successfully.
 | 0.000037     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
 | 0.000042     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
 +------------+-----+-----+-----+-----+-----+-----+---------+
-
-Dataset split into training and testing sets.
-
 RandomForestClassifier (n_estimators=210): Accuracy: 0.8940, Train time: 483ms, Prediction time: 20ms, MCC: 0.789968, TP: 436, TN: 458, FN: 70, FP: 36
 ....
 XGBClassifier (n_estimators=210): Accuracy: 0.8940, Train time: 52ms, Prediction time: 4ms, MCC: 0.789968, TP: 436, TN: 458, FN: 70, FP: 36
 ....
 DeepSVDD (n_estimators=N/A): Accuracy: 0.4833, Train time: 10273ms, Prediction time: 1ms, MCC: 0.270419, TP: 173, TN: 376, FN: 579, FP: 8
-
+----------------------------------------
 Best Classifier based on Accuracy
 Classifier: KNeighborsClassifier
 n_estimators: N/A
 Accuracy Score: 0.8990
-
+----------------------------------------
 Best Classifier based on MCC
 Classifier: KNeighborsClassifier
 n_estimators: N/A
 MCC Score: 0.798304
-
+----------------------------------------
 Best Classifier based on prediction time
 Classifier: DeepSVDD
 Time : 1.000000ms
@@ -304,7 +298,9 @@ sudo python3 detector.py
 
 > [!TIP]
 > When running the script, a log file containing all events called `logs` is created in the main project directory.
-> When running the script, some other connections directed to localhost interface may be callected in the process.
+
+> [!WARNING]
+> Some other connections directed to localhost interface may be callected in the process. Actually this gives a real scenario perspective of the problem.
 
 ---
 
