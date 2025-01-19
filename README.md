@@ -286,7 +286,33 @@ sudo pacman && sudo pacman -S nmap
 flatpak install nmap
 ```
 
-To run the detector:
+You need to install `tshark` needed for `pyshark`
+
+```bash
+sudo apt update -y && sudo apt install tshark -y
+sudo pacman && sudo pacman -S tshark
+```
+
+At this point you need at least minimal requirements:
+
+```bash
+pip install -r requirements-minimal.txt
+```
+
+> [!CAUTION]
+> This is important. The `duration` feature is system depended and is calculated using time differentials on my local system.
+> Since on another system, duration feature can be slightly different because of pyshark times, the behaviour used in the pre-trained
+> model (and so the live demo `detector.py`) can be affected by this.
+> 
+> A solution is to re-create the training set again based on the new system using the train dataset creation procedure already described, and then, 
+> re-export the model by training it on new intercepted data. 
+> Attack types which are recognized already without depending on the `duration` feature will continue to work properly without re-train.
+
+Create dataset and train
+
+```bash
+sudo python3 dataset_and_train.py
+```
 
 ```bash
 sudo python3 detector.py

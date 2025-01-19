@@ -1,8 +1,10 @@
 import time 
 import pandas as pd
+import os 
+import subprocess
 
 LOG_FILE = 'logs'
-RUNTIME_CAPTURE = 'datasets/runtime/capture.csv'
+RUNTIME_CAPTURE = os.path.join('datasets','runtime','capture.csv')
 OS_INSTALLATION_PATHS = [
     "/bin",
     "/sbin",
@@ -20,6 +22,10 @@ OS_INSTALLATION_PATHS = [
 # Utility function for time measurement
 def current_ms() -> int:
     return round(time.time() * 1000)
+
+def run_command(command):
+    print("RUNNING COMMAND " + command)
+    subprocess.call(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=False)
 
 def preprocess_dataset(df: pd.DataFrame):
     """

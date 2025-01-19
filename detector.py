@@ -21,7 +21,6 @@ INTERFACE = 'lo' # change this with your interface
 IP = "127.0.0.1"
 
 console = Console()
-threads = []
 
 # Graceful shutdown handler
 def signal_handler(sig, frame):
@@ -78,11 +77,9 @@ def main():
     
     # Start background threads
     capture_thread = threading.Thread(target=capture_packets, args=(INTERFACE, IP, RUNTIME_CAPTURE), daemon=True)
-    threads.append(capture_thread)
     capture_thread.start()
     
     injector_thread = threading.Thread(target=run_injector, daemon=True)
-    threads.append(injector_thread)
     injector_thread.start()
     
     time.sleep(SLEEP_SECONDS) # wait a second before proceeding

@@ -37,7 +37,8 @@ RESPONSE_PATTERNS = {
 def capture_packets(interface='lo',
                     scanner_ip='127.0.0.1',
                     output_file='packet_dataset.csv',
-                    label=None
+                    label=None,
+                    stop_event=threading.Event(),
                     ):
     """
     Capture TCP traffic, aggregate request/response packet data, and log them in CSV.
@@ -79,8 +80,8 @@ def capture_packets(interface='lo',
     })
 
 
-    def save_sessions_periodically():
-        while True:
+    def save_sessions_periodically(stop_event=threading.Event()):
+        while not stop_event.is_set():
             current_time = datetime.now()
             with open(output_file, mode='a', newline='') as csv_file:
                 writer = csv.writer(csv_file)
@@ -112,7 +113,7 @@ def capture_packets(interface='lo',
             time.sleep(SAVE_INTERVAL)
 
     # Use a separate thread for managing csv 
-    saver_thread = threading.Thread(target=save_sessions_periodically, daemon=True)
+    saver_thread = threading.Thread(target=save_sessions_periodically, args=(stop_event,), daemon=True)
     saver_thread.start()
 
     # get_tcp_flags
@@ -132,6 +133,9 @@ def capture_packets(interface='lo',
         if 'ip' not in packet or 'tcp' not in packet:
             continue
         
+        if stop_event.is_set():
+            return
+    
         src_ip = packet.ip.src  
         dst_ip = packet.ip.dst
         src_port = packet.tcp.srcport

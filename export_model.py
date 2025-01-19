@@ -4,9 +4,10 @@ from sklearn.metrics import accuracy_score, confusion_matrix, matthews_corrcoef
 from utils import preprocess_dataset
 import pandas as pd
 import joblib
+import os 
 
-if __name__== "__main__":
-    df = pd.read_csv('./datasets/train/merged.csv')
+def export_model(dataset_path=os.path.join('datasets','train','merged.csv'), model_path=os.path.join("model','model.pkl")):
+    df = pd.read_csv(dataset_path)
     print(f"Dataset loaded with {len(df)} records.")
 
     # Preprocess Dataset
@@ -37,4 +38,7 @@ if __name__== "__main__":
     
     print(f"Accuracy {acc_score}, MCC {mcc}, TN: {tn} FP: {fp} FN: {fn} TP: {tp}")
     
-    joblib.dump(clf, "./model/model.pkl")
+    joblib.dump(clf, model_path)
+
+if __name__== "__main__":
+    export_model()
