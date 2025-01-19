@@ -26,7 +26,7 @@ In the project the following files have the described functions:
 - `algo_chooser.py` -> script for choosing the best machine learning algorithm
 - `injector.py` -> injects nmap scans or run normal http requests
 - `classifiers.py` -> define a big list of classifiers for `algo_chooser.py`
-- `dataset_and_train.py` -> create a dataset on locally with bad and good data and produce a model trained on such data
+- `dataset_and_train.py` -> create a dataset locally with bad and good data and produce a model trained on such data
 - `noiser.py` -> helper script for sending normal http requests
 - `detector.py` -> runs a real-time demo of the model using previously mentioned scripts internally
 - `export_model.py` -> utility for model exportation
