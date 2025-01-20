@@ -16,9 +16,7 @@ OS_INSTALLATION_PATHS = [
     "/usr/local/sbin",
     "/snap/bin",
     "/var/lib/flatpak/app",
-    "/libexec",
-    "/usr/libexec",
-    
+
     # Common Windows installation directories
     "C:\\Program Files",
     "C:\\Program Files (x86)",
@@ -28,8 +26,8 @@ OS_INSTALLATION_PATHS = [
     f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
     f"C:\\Users\\{os.getlogin()}\\Desktop",  
     f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Microsoft\\WinGet\\Packages",
-    f"C:\Users\{os.getlogin()}\AppData\Local\Temp",
-    f"C:\Program Files\WindowsApps"
+    f"C:\\Users\\{os.getlogin()}\\AppData\Local\Temp",
+    f"C:\\Program Files\\WindowsApps"
 ]
 
 
