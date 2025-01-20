@@ -94,13 +94,16 @@ if __name__ == "__main__":
     no_strict_check_flag = "--no-strict-check" in sys.argv if len(sys.argv) > 1 else False
     
     if not any(os.path.exists(os.path.join(x, "nmap")) for x in OS_INSTALLATION_PATHS):
-        print("[bold red]Nmap is required to be installed on the host[/bold red]")
+        print("Nmap is required to be installed on the host")
         sys.exit(-1)
     
-    if not no_strict_check_flag:
+    if not any(os.path.exists(os.path.join(x, "wireshark")) for x in OS_INSTALLATION_PATHS):
+        print("Tshark is required to be installed on the host")
+        sys.exit(-1)
         
+    if not no_strict_check_flag:
         if os.geteuid() != 0:
-            print("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
+            print("Pyshark needs root privileges for capturing data on interfaces")
             sys.exit(-1)
             
     produce_dataset_for_this_system()
