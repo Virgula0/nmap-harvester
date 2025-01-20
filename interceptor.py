@@ -39,8 +39,7 @@ def capture_packets(interface='lo',
                     scanner_ip='127.0.0.1',
                     output_file='packet_dataset.csv',
                     label=None,
-                    stop_event=threading.Event(),
-                    ):
+                    stop_event=threading.Event()):
     """
     Capture TCP traffic, aggregate request/response packet data, and log them in CSV.
     """

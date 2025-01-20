@@ -27,7 +27,9 @@ OS_INSTALLATION_PATHS = [
     f"C:\\Users\\{os.getlogin()}\\AppData\\Local",
     f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
     f"C:\\Users\\{os.getlogin()}\\Desktop",  
-    f"C:\\Users\\{os.getlogin()}\\nmap",  
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Microsoft\\WinGet\\Packages",
+    f"C:\Users\{os.getlogin()}\AppData\Local\Temp",
+    f"C:\Program Files\WindowsApps"
 ]
 
 

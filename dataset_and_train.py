@@ -31,13 +31,10 @@ MODEL_PATH = os.path.join('model','model.pkl')
 def calculate_md5(file_path):
     """Calculate the MD5 checksum of a file."""
     hash_md5 = hashlib.md5()
-    try:
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        return hash_md5.hexdigest()
-    except FileNotFoundError:
-        return f"File '{file_path}' not found."
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 def produce_dataset_for_this_system():
     stop_event = threading.Event()
@@ -101,7 +98,7 @@ if __name__ == "__main__":
         sys.exit(-1)
     
     if not no_strict_check_flag:
-    
+        
         if os.geteuid() != 0:
             print("[bold red]Pyshark needs root privileges for capturing data on interfaces[/bold red]")
             sys.exit(-1)
