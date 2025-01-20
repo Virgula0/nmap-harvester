@@ -332,7 +332,7 @@ sudo python3 detector.py
 
 # Demonstration Video
 
-https://github.com/user-attachments/assets/f10773c6-742e-4394-913e-42beb0cc3683
+[![https://www.youtube.com/watch?v=Nsazb0cxeR8](https://img.youtube.com/vi/Nsazb0cxeR8/0.jpg)](https://www.youtube.com/watch?v=Nsazb0cxeR8)
 
 # References
 
