@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import threading
 import time
+import asyncio 
 
 # Sliding window parameters
 WINDOW_SIZE = timedelta(seconds=0.5)  # Session timeout window
@@ -37,17 +38,11 @@ RESPONSE_PATTERNS = {
 def capture_packets(interface='lo',
                     scanner_ip='127.0.0.1',
                     output_file='packet_dataset.csv',
-                    label=None
-                    ):
+                    label=None,
+                    stop_event=threading.Event()):
     """
     Capture TCP traffic, aggregate request/response packet data, and log them in CSV.
     """
-    bpf_filter = f"host {scanner_ip} and tcp"
-    capture = pyshark.LiveCapture(interface=interface, bpf_filter=bpf_filter)
-
-    print(f"[*] Starting packet capture on {interface} with filter: {bpf_filter}")
-    print(f"[*] Output CSV: {output_file}")
-
     # Initialize CSV
     with open(output_file, mode='w', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -79,8 +74,8 @@ def capture_packets(interface='lo',
     })
 
 
-    def save_sessions_periodically():
-        while True:
+    def save_sessions_periodically(stop_event=threading.Event()):
+        while not stop_event.is_set():
             current_time = datetime.now()
             with open(output_file, mode='a', newline='') as csv_file:
                 writer = csv.writer(csv_file)
@@ -112,7 +107,7 @@ def capture_packets(interface='lo',
             time.sleep(SAVE_INTERVAL)
 
     # Use a separate thread for managing csv 
-    saver_thread = threading.Thread(target=save_sessions_periodically, daemon=True)
+    saver_thread = threading.Thread(target=save_sessions_periodically, args=(stop_event,), daemon=True)
     saver_thread.start()
 
     # get_tcp_flags
@@ -128,73 +123,89 @@ def capture_packets(interface='lo',
             'PSH': 1 if (int(packet.tcp.flags, 16) & 0x08) else 0
         }
 
-    for packet in capture.sniff_continuously():
-        if 'ip' not in packet or 'tcp' not in packet:
-            continue
-        
-        src_ip = packet.ip.src  
-        dst_ip = packet.ip.dst
-        src_port = packet.tcp.srcport
-        dst_port = packet.tcp.dstport
-        timestamp = packet.sniff_time
-        
-        tcp_flags = get_tcp_flags(packet)
-        
-        # Detect Request Patterns
-        # Check direction: is it from the scanner (request) or from the target (response)? 
-        # Adjust session_key for FIN, NULL, XMAS scans
-        if any(pattern(tcp_flags) for pattern in [
-            REQUEST_PATTERNS['FIN_SCAN'],
-            REQUEST_PATTERNS['NULL_SCAN'],
-            REQUEST_PATTERNS['XMAS_SCAN']
-        ]):
-            session_key = tuple([src_port, dst_port])
-            reversed_session_key = session_key # set reversed_session_key since these scan could not contain a response, dst_port is the only one not changing
-        else:
-            session_key = tuple([src_port, dst_port])
-            reversed_session_key = tuple([dst_port, src_port])  
-        
-        is_request = True # assume it is a request
-        
-        if reversed_session_key in sessions:
-            # If the reversed session_key exists, consider it not a request but a response
-            session_key = reversed_session_key  # Use the reversed session_key for further updates
-            is_request = False
+    loop = asyncio.new_event_loop() # for windows operating system 
+    asyncio.set_event_loop(loop)
+    
+    bpf_filter = f"host {scanner_ip} and tcp"
+    capture = pyshark.LiveCapture(interface=interface, bpf_filter=bpf_filter)
+
+    print(f"[*] Starting packet capture on {interface} with filter: {bpf_filter}")
+    print(f"[*] Output CSV: {output_file}")
+    
+    try:
+        for packet in capture.sniff_continuously():
+            if 'ip' not in packet or 'tcp' not in packet:
+                continue
             
-        # print(src_port)
-        # Update request timings
-        if is_request:
+            if stop_event.is_set():
+                return
+        
+            src_ip = packet.ip.src  
+            dst_ip = packet.ip.dst
+            src_port = packet.tcp.srcport
+            dst_port = packet.tcp.dstport
+            timestamp = packet.sniff_time
             
-            #print("REQUEST" + str(tcp_flags))
-            if any(pattern(tcp_flags) for pattern in REQUEST_PATTERNS.values()):
-                if sessions[session_key]['start_request_time'] is None:
-                    sessions[session_key]['start_request_time'] = timestamp
-                sessions[session_key]['end_request_time'] = timestamp
-        else:
+            tcp_flags = get_tcp_flags(packet)
             
-            #print("RESPONSE" + str(tcp_flags))
-            if any(pattern(tcp_flags) for pattern in RESPONSE_PATTERNS.values()):
-                if sessions[session_key]['start_response_time'] is None:
-                    sessions[session_key]['start_response_time'] = timestamp
-                sessions[session_key]['end_response_time'] = timestamp
+            # Detect Request Patterns
+            # Check direction: is it from the scanner (request) or from the target (response)? 
+            # Adjust session_key for FIN, NULL, XMAS scans
+            if any(pattern(tcp_flags) for pattern in [
+                REQUEST_PATTERNS['FIN_SCAN'],
+                REQUEST_PATTERNS['NULL_SCAN'],
+                REQUEST_PATTERNS['XMAS_SCAN']
+            ]):
+                session_key = tuple([src_port, dst_port])
+                reversed_session_key = session_key # set reversed_session_key since these scan could not contain a response, dst_port is the only one not changing
+            else:
+                session_key = tuple([src_port, dst_port])
+                reversed_session_key = tuple([dst_port, src_port])  
+            
+            is_request = True # assume it is a request
+            
+            if reversed_session_key in sessions:
+                # If the reversed session_key exists, consider it not a request but a response
+                session_key = reversed_session_key  # Use the reversed session_key for further updates
+                is_request = False
+                
+            # print(src_port)
+            # Update request timings
+            if is_request:
+                
+                #print("REQUEST" + str(tcp_flags))
+                if any(pattern(tcp_flags) for pattern in REQUEST_PATTERNS.values()):
+                    if sessions[session_key]['start_request_time'] is None:
+                        sessions[session_key]['start_request_time'] = timestamp
+                    sessions[session_key]['end_request_time'] = timestamp
+            else:
+                
+                #print("RESPONSE" + str(tcp_flags))
+                if any(pattern(tcp_flags) for pattern in RESPONSE_PATTERNS.values()):
+                    if sessions[session_key]['start_response_time'] is None:
+                        sessions[session_key]['start_response_time'] = timestamp
+                    sessions[session_key]['end_response_time'] = timestamp
 
 
-        # Update IPs and Ports
-        sessions[session_key]['src_ips'].add(src_ip)
-        sessions[session_key]['dst_ips'].add(dst_ip)
-        sessions[session_key]['src_ports'].add(src_port)
-        sessions[session_key]['dst_ports'].add(dst_port)
+            # Update IPs and Ports
+            sessions[session_key]['src_ips'].add(src_ip)
+            sessions[session_key]['dst_ips'].add(dst_ip)
+            sessions[session_key]['src_ports'].add(src_port)
+            sessions[session_key]['dst_ports'].add(dst_port)
 
-        # Increment TCP Flags
-        sessions[session_key]['SYN'] += tcp_flags['SYN']
-        sessions[session_key]['ACK'] += tcp_flags['ACK']
-        sessions[session_key]['FIN'] += tcp_flags['FIN']
-        sessions[session_key]['RST'] += tcp_flags['RST']
-        sessions[session_key]['URG'] += tcp_flags['URG']
-        sessions[session_key]['PSH'] += tcp_flags['PSH']
+            # Increment TCP Flags
+            sessions[session_key]['SYN'] += tcp_flags['SYN']
+            sessions[session_key]['ACK'] += tcp_flags['ACK']
+            sessions[session_key]['FIN'] += tcp_flags['FIN']
+            sessions[session_key]['RST'] += tcp_flags['RST']
+            sessions[session_key]['URG'] += tcp_flags['URG']
+            sessions[session_key]['PSH'] += tcp_flags['PSH']
 
-        # Update Last Updated Time
-        sessions[session_key]['last_updated'] = datetime.now()
+            # Update Last Updated Time
+            sessions[session_key]['last_updated'] = datetime.now()
+    finally:
+        asyncio.set_event_loop(None)
+        loop.close()
 
 """
     To generete traffic through docker container
