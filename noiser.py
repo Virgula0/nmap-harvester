@@ -7,14 +7,14 @@ TARGET_HOST = "172.31.0.1"  # Replace with the actual target IP/hostname
 NUM_RANDOM_PORTS = 12000     # Number of random ports to try each cycle
 SLEEP_SECONDS = 0        # Time to wait between cycles
 
-def generate_noise():
+def generate_noise(target_host=TARGET_HOST,num_random_ports=NUM_RANDOM_PORTS,sleep_seconds=SLEEP_SECONDS):
     """
     Send HTTP GET requests to random ports and one known open port (OPEN_PORT).
     """
     # 1) Make requests to random ports
-    for port in range(1,NUM_RANDOM_PORTS):
+    for port in range(1,num_random_ports):
         #port = random.randint(1, 65535)  # choose a random port in [1..65535]
-        url = f"http://{TARGET_HOST}:{port}/"
+        url = f"http://{target_host}:{port}/"
         print(f"Trying {url}")
         try:
             # Using a short timeout to avoid blocking for too long on closed or filtered ports
@@ -25,7 +25,7 @@ def generate_noise():
             pass
 
         # 3) Sleep briefly before sending next batch of requests
-        time.sleep(SLEEP_SECONDS)
+        time.sleep(sleep_seconds)
 
 if __name__ == "__main__":
     try:

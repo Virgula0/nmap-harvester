@@ -26,6 +26,7 @@ In the project the following files have the described functions:
 - `algo_chooser.py` -> script for choosing the best machine learning algorithm
 - `injector.py` -> injects nmap scans or run normal http requests
 - `classifiers.py` -> define a big list of classifiers for `algo_chooser.py`
+- `dataset_and_train.py` -> create a dataset locally with bad and good data and produce a model trained on such data
 - `noiser.py` -> helper script for sending normal http requests
 - `detector.py` -> runs a real-time demo of the model using previously mentioned scripts internally
 - `export_model.py` -> utility for model exportation
@@ -36,9 +37,9 @@ In the project the following files have the described functions:
 - `datasets/runtime` -> contains generated runtime datasets when running `detector.py`
 
 > [!WARNING]
-> The entire software is designed for running on a Linux environment and although the only changes needed for running on another operating system are interface names, some checks may fail due to different environments.
-> For example: `detector.py` contains a check to run with `root` privileges and this check can be disabled if environment is different from Unix. To disable checks you can pass `--no-strick-check` argument to the script.
-> This disclaimer has been inserted because I noticed the usage of other operating systems during the course lectures. Running the `detector.py` on a virtual environment should work because everything is set to run on the `localhost` interface, but even here, the creation of the dataset phases may not work because of interfaces used by pyshark on a virtual machine. A solution can be to create another container and let the 2 isolated container to communicate between them, but this is up to the readers to investigate better eventually.
+> The entire software is designed for running on a Linux environment however the only changes needed for running on another operating system are interface names.
+> For example, windows does not have `lo` loopback interface, as well as ip addresses must be adapted.
+> This disclaimer has been inserted because I noticed the usage of other operating systems during the course lectures. Running the `detector.py` on a virtual environment should work because everything is set to run on the `localhost` interface.
 
 ## Requirements
 
@@ -47,7 +48,7 @@ Install dependencies with:
 ```bash
    python3.11 -m venv venv && \ # python3.13 has been tested to have some problems when trying to install catboost
    source venv/bin/activate && \
-   pip install -r requirements.txt
+   pip install -r requirements.txt # this is full requirements for running algo_chooser.py too, if you want to skip it install requirements-minimal.txt instead
 ```
 
 > [!WARNING]
@@ -85,7 +86,7 @@ start_request_time,end_request_time,start_response_time,end_response_time,durati
 More technical explanations are present via comments in `interceptor.py`. The script takes a while for writing succesfully all the data when a lot of requests are performed.
 
 > [!NOTE]
-> During the data collection, some ports were opened intentionally on the host to differentiate some rows in the dataset. For example, an HTTP server on port `1234` has been opened using the following method: `python3 -m http.server 1234`plus, eventually other ports that had already been opened from other services between the range 0-5000.
+> During the data collection, some ports were opened intentionally on the host to differentiate some rows in the dataset. For example, an HTTP server on port `1234` has been opened using the following method: `python3 -m http.server 1234` plus, eventually other ports that had already been opened from other services between the range 0-5000.
 
 ## Common `NMAP` Scans
 
@@ -210,9 +211,13 @@ The training dataset, `datasets/train/merged.csv`, is generated using the follow
    cd datasets
    python3 merger.py
    ```
-7. Train the model:
+7. Choose the model:
    ```bash
    python3 algo_chooser.py
+   ```
+8. Train and export the model
+   ```bash
+   python3 export_model.py
    ```
 ---
 
@@ -241,15 +246,7 @@ We still continue to prefer `XGBClassifier` for the same reasons discussed for t
 
 ```
 Dataset loaded with 10000 records.
-+------------+-----+-----+-----+-----+-----+-----+---------+
-|   duration   | SYN | ACK | FIN | RST | URG | PSH | label |
-|--------------|-----|-----|-----|-----|-----|-----|-------|
-| 0.000067     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-| 0.000051     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-| 0.000062     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-| 0.000037     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-| 0.000042     |  1  |  1  |  0  |  1  |  0  |  0  |   1   |
-+------------+-----+-----+-----+-----+-----+-----+---------+
+....
 RandomForestClassifier (n_estimators=210): Accuracy: 0.8940, Train time: 483ms, Prediction time: 20ms, MCC: 0.789968, TP: 436, TN: 458, FN: 70, FP: 36
 ....
 XGBClassifier (n_estimators=210): Accuracy: 0.8940, Train time: 52ms, Prediction time: 4ms, MCC: 0.789968, TP: 436, TN: 458, FN: 70, FP: 36
@@ -276,7 +273,7 @@ Time : 1.000000ms
 # Running the Detector
 
 The `detector.py` represents the live-demo for NMAP attacks detection.
-The host is required to having `nmap` installed. 
+The host is required to having `nmap` and `tshark` (wireshark on windows) installed. 
 
 Depending on your distro
 
@@ -286,7 +283,36 @@ sudo pacman && sudo pacman -S nmap
 flatpak install nmap
 ```
 
-To run the detector:
+You need to install `tshark` for `pyshark`
+
+```bash
+sudo apt update -y && sudo apt install tshark -y
+sudo pacman && sudo pacman -S tshark
+```
+
+At this point you need at least minimal requirements (first define a virtual env)
+
+```bash
+pip install -r requirements-minimal.txt
+```
+
+> [!CAUTION]
+> This is important. The `duration` feature is system depended and is calculated using time differentials on a given local system.
+> Since on another system, duration feature can be slightly different because of pyshark times, the behaviour used in the pre-trained
+> model (and so the live demo `detector.py`) can be affected by this.
+> 
+> A solution is to re-create the training set again using `dataset_and_train.py` or alternatively using
+> the train dataset creation procedure already described (more complex but more precise), and then, re-export the model by training it on new intercepted data. 
+> This is needed otherwise http normal request will be recognized as anomalies because of different duration times captured on another system.
+
+Create dataset and train
+
+```bash
+sudo python3 dataset_and_train.py
+```
+
+> [!TIP]
+> If you have processes running on localhost which may interfere with the capture and you notice that the `bad.csv` or `good.csv` monitor loop does not exist, you can force to continue by pressing ctrl+c. `bad.csv` and `good.csv` should have at least 12k data points per file.
 
 ```bash
 sudo python3 detector.py
@@ -306,7 +332,7 @@ sudo python3 detector.py
 
 # Demonstration Video
 
-https://github.com/user-attachments/assets/f10773c6-742e-4394-913e-42beb0cc3683
+[![https://www.youtube.com/watch?v=Nsazb0cxeR8](https://img.youtube.com/vi/Nsazb0cxeR8/0.jpg)](https://www.youtube.com/watch?v=Nsazb0cxeR8)
 
 # References
 

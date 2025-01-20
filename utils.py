@@ -1,9 +1,12 @@
 import time 
 import pandas as pd
+import os 
+import subprocess
 
 LOG_FILE = 'logs'
-RUNTIME_CAPTURE = 'datasets/runtime/capture.csv'
+RUNTIME_CAPTURE = os.path.join('datasets','runtime','capture.csv')
 OS_INSTALLATION_PATHS = [
+    # Common Unix/Linux directories
     "/bin",
     "/sbin",
     "/usr/bin",
@@ -13,13 +16,28 @@ OS_INSTALLATION_PATHS = [
     "/usr/local/sbin",
     "/snap/bin",
     "/var/lib/flatpak/app",
-    "/libexec",
-    "/usr/libexec"
+
+    # Common Windows installation directories
+    "C:\\Program Files",
+    "C:\\Program Files (x86)",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Programs",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Local",
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
+    f"C:\\Users\\{os.getlogin()}\\Desktop",  
+    f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Microsoft\\WinGet\\Packages",
+    f"C:\\Users\\{os.getlogin()}\\AppData\Local\Temp",
+    f"C:\\Program Files\\WindowsApps"
 ]
+
 
 # Utility function for time measurement
 def current_ms() -> int:
     return round(time.time() * 1000)
+
+def run_command(command):
+    print("RUNNING COMMAND " + command)
+    subprocess.call(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=False)
 
 def preprocess_dataset(df: pd.DataFrame):
     """
