@@ -8,9 +8,6 @@ SLEEP_TIME = 1
 PROBABILITY_INJECTION = 10 # 10% of probabilities to inject NUMBER_OF_PORTS anomalies each SLEEP_TIME seconds
 NUMBER_OF_PORTS = 30
 INJECTION_TIME_SLEEP = 5
-
-# It is advisable to disable -sT and -sS by commenting them out as they're detection can be system dependent and a 
-# new dataset built and re-trained on the new system may be required for detecting them succesfully.
 INJECT_OPTIONS = [
     "-sT",
     "-sS",
