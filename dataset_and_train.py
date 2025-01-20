@@ -55,7 +55,7 @@ def produce_dataset_for_this_system():
     # you can press ctrl+c to force the loop exiting
     try:
         while md5_checksum != calculate_md5(CAPTURE_BAD):
-            print("Monitor is still saving data... if you want to force the proceeding press ctrl+c (do it if you do what you're doing)")
+            print("Monitor is still saving data... if you want to force the proceeding press ctrl+c (do it if you know what you're doing)")
             md5_checksum = calculate_md5(CAPTURE_BAD)
             time.sleep(2)
     except KeyboardInterrupt:
@@ -79,7 +79,7 @@ def produce_dataset_for_this_system():
     # you can press ctrl+c to force the loop exiting
     try:
         while md5_checksum != calculate_md5(CAPTURE_BAD):
-            print("Monitor is still saving data... if you want to force the proceeding press ctrl+c (do it if you do what you're doing)")
+            print("Monitor is still saving data... if you want to force the proceeding press ctrl+c (do it if you know what you're doing)")
             md5_checksum = calculate_md5(CAPTURE_BAD)
             time.sleep(2)
     except KeyboardInterrupt:
