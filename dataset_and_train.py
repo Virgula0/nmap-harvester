@@ -96,10 +96,6 @@ if __name__ == "__main__":
     if not any(os.path.exists(os.path.join(x, "nmap")) for x in OS_INSTALLATION_PATHS):
         print("Nmap is required to be installed on the host")
         sys.exit(-1)
-    
-    if not any(os.path.exists(os.path.join(x, "wireshark")) for x in OS_INSTALLATION_PATHS):
-        print("Tshark is required to be installed on the host")
-        sys.exit(-1)
         
     if not no_strict_check_flag:
         if os.geteuid() != 0:
