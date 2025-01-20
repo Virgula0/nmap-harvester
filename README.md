@@ -298,11 +298,9 @@ pip install -r requirements-minimal.txt
 
 > [!CAUTION]
 > This is important. The `duration` feature is system depended and is calculated using time differentials on a given local system.
-> Since on another system, duration feature can be slightly different because of pyshark times, the behaviour used in the pre-trained
-> model (and so the live demo `detector.py`) can be affected by this.
+> Since on another system, duration feature can be slightly different because of pyshark times, the behaviour used in the pre-trained model (and so the live demo `detector.py`) can be affected by this.
 > 
-> A solution is to re-create the training set again using `dataset_and_train.py` or alternatively using
-> the train dataset creation procedure already described (more complex but more precise), and then, re-export the model by training it on new intercepted data. 
+> A solution is to re-create the training set again using `dataset_and_train.py` or alternatively using the train dataset creation procedure already described (more complex but more precise), and then, re-export the model by training it on new intercepted data. 
 > This is needed otherwise http normal request will be recognized as anomalies because of different duration times captured on another system.
 
 Create dataset and train
@@ -324,6 +322,7 @@ sudo python3 detector.py
 
 > [!TIP]
 > When running the script, a log file containing all events called `logs` is created in the main project directory.
+
 
 > [!WARNING]
 > Some other connections directed to localhost interface may be callected in the process. Actually this gives a real scenario perspective of the problem.
